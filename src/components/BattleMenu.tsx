@@ -6,7 +6,7 @@ type BattleMenuProps = {
 
 const ACTIONS = [
   { label: "FIGHT", value: "fight" },
-  { label: "PKMN", value: "pkmn" },
+  { label: "CHG", value: "chg" },
   { label: "ITEM", value: "item" },
   { label: "RUN", value: "run" },
 ];
@@ -38,7 +38,7 @@ function BattleMenu({ onSelect }: BattleMenuProps) {
   }, [selected, onSelect]);
 
   return (
-    <div className="relative inline-block border-4 border-black bg-[#f8e9f8] p-4">
+    <div className="relative inline-block border-4 border-black p-4">
       <div className="grid grid-cols-2 gap-4">
         {ACTIONS.map((action, idx) => (
           <button
@@ -50,16 +50,16 @@ function BattleMenu({ onSelect }: BattleMenuProps) {
               setSelected(idx);
               onSelect(action.value);
             }}
-            className={`relative text-black text-xl font-bold px-2 py-1 transition-none align-left`}
+            className={`relative text-black text-xl font-bold px-2 py-1 transition-none text-left`}
             tabIndex={-1}
           >
             {selected === idx && (
               <span
                 style={{
                   position: "absolute",
-                  left: -18,
+                  left: -12,
                   top: "50%",
-                  transform: "translateY(-50%)",
+                  transform: "translateY(-60%)",
                   fontSize: "1.2em",
                   color: "black",
                   fontWeight: "bold",
