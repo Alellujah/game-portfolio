@@ -1,3 +1,5 @@
+import Container from "./Container";
+
 type StatusBarProps = {
   hp: number; // 0 to 100
   level: number;
@@ -12,7 +14,7 @@ function StatusBar({ hp, level, name, actualHp }: StatusBarProps) {
   else if (hpPercent <= 50) barColor = "bg-yellow-400";
 
   return (
-    <div className="inline-block px-8 py-4 border-4 border-black bg-white">
+    <Container>
       <div className="text-center mb-1">
         <div className="uppercase tracking-wide text-black text-base font-bold">
           {name}
@@ -35,7 +37,7 @@ function StatusBar({ hp, level, name, actualHp }: StatusBarProps) {
         </div>
         <div className="flex-1 border-t-2 border-black ml-2" />
       </div>
-    </div>
+    </Container>
   );
 }
 

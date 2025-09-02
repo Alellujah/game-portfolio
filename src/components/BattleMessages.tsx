@@ -1,31 +1,39 @@
 import { useEffect, useState } from "react";
+import DecorativeCorners from "./DecorativeCorners";
+import Container from "./Container";
 
 type Props = {
   message: string;
   speed?: number; // ms per character
+  className?: string;
 };
 
-function BattleMessages({ message, speed = 30 }: Props) {
+function BattleMessages({ message, speed = 30, className = "" }: Props) {
   const [displayed, setDisplayed] = useState("");
 
   useEffect(() => {
+    if (!message) {
+      setDisplayed("");
+      return;
+    }
+
     setDisplayed("");
     let i = 0;
     const interval = setInterval(() => {
-      if (i < message.length) {
-        setDisplayed((prev) => prev + message[i]);
-        i++;
-      } else {
+      i++;
+      setDisplayed(message.slice(0, i));
+      if (i >= message.length) {
         clearInterval(interval);
       }
     }, speed);
+
     return () => clearInterval(interval);
   }, [message, speed]);
 
   return (
-    <div className="inline-block border-4 border-black bg-white p-4 w-96">
-      <p className="text-black text-lg font-bold font-mono">{displayed}</p>
-    </div>
+    <Container fixedWidth>
+      <p className="text-black text-sm leading-snug">{displayed}</p>
+    </Container>
   );
 }
 

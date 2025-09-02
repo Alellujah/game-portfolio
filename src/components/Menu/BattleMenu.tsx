@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import Container from "../Container";
 
 type BattleMenuProps = {
   onSelect: (action: string) => void;
@@ -38,7 +39,7 @@ function BattleMenu({ onSelect }: BattleMenuProps) {
   }, [selected, onSelect]);
 
   return (
-    <div className="relative inline-block border-4 border-black p-4">
+    <Container>
       <div className="grid grid-cols-2 gap-4">
         {ACTIONS.map((action, idx) => (
           <button
@@ -72,52 +73,7 @@ function BattleMenu({ onSelect }: BattleMenuProps) {
           </button>
         ))}
       </div>
-      {/* Decorative corners */}
-      <span
-        style={{
-          position: "absolute",
-          left: 0,
-          top: 0,
-          width: 8,
-          height: 8,
-          borderLeft: "4px solid black",
-          borderTop: "4px solid black",
-        }}
-      />
-      <span
-        style={{
-          position: "absolute",
-          right: 0,
-          top: 0,
-          width: 8,
-          height: 8,
-          borderRight: "4px solid black",
-          borderTop: "4px solid black",
-        }}
-      />
-      <span
-        style={{
-          position: "absolute",
-          left: 0,
-          bottom: 0,
-          width: 8,
-          height: 8,
-          borderLeft: "4px solid black",
-          borderBottom: "4px solid black",
-        }}
-      />
-      <span
-        style={{
-          position: "absolute",
-          right: 0,
-          bottom: 0,
-          width: 8,
-          height: 8,
-          borderRight: "4px solid black",
-          borderBottom: "4px solid black",
-        }}
-      />
-    </div>
+    </Container>
   );
 }
 
