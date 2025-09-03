@@ -4,18 +4,31 @@ import BattleMenu from "../components/Menu/BattleMenu";
 import Sprite from "../components/Sprite";
 import StatusBar from "../components/StatusBar";
 import FightMenu from "../components/Menu/FightMenu";
+import type { Mon } from "../engine/mons";
 
-export default function Menu() {
+interface ActiveMon extends Mon {
+  maxHp: number;
+  level: number;
+}
+
+interface Props {
+  playerSpriteUrl?: string;
+  enemySpriteUrl?: string;
+  playerMon: ActiveMon;
+  enemyMon: ActiveMon;
+  playerMons: Mon[];
+  enemyMons: Mon[];
+}
+
+export default function Battlefield({
+  enemyMon,
+  enemyMons,
+  playerMon,
+  playerMons,
+  playerSpriteUrl,
+  enemySpriteUrl,
+}: Props) {
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
-
-  const skills = [
-    { name: "REACT STRIKE", type: "NORMAL", pp: 15, maxPP: 15, power: 40 },
-    { name: "NEXT BEAM", type: "NORMAL", pp: 10, maxPP: 10, power: 55 },
-    { name: "UX POLISH", type: "NORMAL", pp: 20, maxPP: 20, power: 25 },
-    { name: "DOCKER SLAM", type: "NORMAL", pp: 10, maxPP: 10, power: 50 },
-  ];
-  const spriteUrl = "public/back-recruiter-no-gb.png";
-  const enemySpriteUrl = "public/nerd_it_guy-removebg-preview.png";
 
   const messages = (action: string) => {
     switch (action) {
@@ -32,21 +45,31 @@ export default function Menu() {
     }
   };
   return (
-    <>
+    <div className="bg-stone-200 p-4 max-w-4xl mx-auto">
       <div className="grid grid-cols-3 gap-4 items-stretch mb-4">
         <div className="col-span-1 flex items-start">
-          <StatusBar hp={120} actualHp={90} level={6} name="Enemy" />
+          <StatusBar
+            hp={enemyMon.maxHp}
+            actualHp={enemyMon.hp}
+            level={enemyMon.level}
+            name={enemyMon.name}
+          />
         </div>
-        <div className="col-span-2 flex justify-end">
-          <Sprite spriteUrl={enemySpriteUrl} />
+        <div className="col-span-2 flex justify-center">
+          <Sprite spriteUrl={enemyMon.spriteFrontUrl} size={132} />
         </div>
       </div>
       <div className="grid grid-cols-3 gap-4 items-stretch">
-        <div className="col-span-2">
-          <Sprite spriteUrl={spriteUrl} />
+        <div className="col-span-2 justify-center flex">
+          <Sprite spriteUrl={playerMon.spriteBackUrl} size={132} />
         </div>
         <div className="col-span-1 flex items-end">
-          <StatusBar hp={100} actualHp={75} level={5} name="Hero" />
+          <StatusBar
+            hp={playerMon.maxHp}
+            actualHp={playerMon.hp}
+            level={playerMon.level}
+            name={playerMon.name}
+          />
         </div>
       </div>
       <div className="relative">
@@ -73,7 +96,7 @@ export default function Menu() {
             <div className="absolute inset-0 z-30 grid place-items-center">
               <div className="w-full">
                 <FightMenu
-                  skills={skills}
+                  skills={playerMon?.moves || []}
                   onSelect={(skill) => {
                     // handle the selected skill here
                     // for now, just close the overlay
@@ -85,6 +108,6 @@ export default function Menu() {
           </>
         )}
       </div>
-    </>
+    </div>
   );
 }

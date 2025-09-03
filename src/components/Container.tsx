@@ -11,7 +11,7 @@ function Container({ children, fixedWidth, className }: Props) {
   return (
     <>
       <div
-        className={`${className} relative border-4 border-black p-4 ${width}`}
+        className={`${className} bg-white relative border-4 border-black p-4 ${width}`}
       >
         <DecorativeCorners />
         {children}
