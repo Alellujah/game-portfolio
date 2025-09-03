@@ -11,7 +11,7 @@ import type { Mon } from "../engine/mons";
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 // global pacing multiplier (higher = slower animations)
-const SPEED_MULT = 1.5; // try 1.5–2.0 if you want even slower
+const SPEED_MULT = 2.0; // global pacing (higher = slower)
 
 interface Props {
   playerMon: Mon;
@@ -55,6 +55,10 @@ export default function Battlefield({
 
   // --- Animation / presentation state ---
   const [lockUI, setLockUI] = useState(false); // disables interactions while animating
+  const lockUIRef = useRef(lockUI);
+  useEffect(() => {
+    lockUIRef.current = lockUI;
+  }, [lockUI]);
   const [dispEnemyHp, setDispEnemyHp] = useState(engEnemy.hp);
   const [dispPlayerHp, setDispPlayerHp] = useState(engPlayer.hp);
 
@@ -75,41 +79,35 @@ export default function Battlefield({
   const [enemyHit, setEnemyHit] = useState(false);
   const [playerHit, setPlayerHit] = useState(false);
 
-  // tween helper for HP bars (ease-out, constant-ish perceived speed)
+  // tween helper for HP bars (linear, slow)
   function tweenHp(
     from: number,
     to: number,
     setter: (v: number) => void,
     duration?: number
   ) {
-    const d = duration ?? 1000; // default if not provided (slower)
+    const d = duration ?? 1800; // slower default tween
     const start = performance.now();
     const diff = to - from;
     const decreasing = diff < 0;
 
-    const easeOutQuint = (x: number) => 1 - Math.pow(1 - x, 5);
-
     function step(now: number) {
       const t = Math.min(1, (now - start) / d);
-      const eased = easeOutQuint(t);
-      const value = from + diff * eased;
-      // keep monotonic and avoid last-frame jump
+      const value = from + diff * t; // linear
+      // round towards target without jumps
       if (decreasing) setter(Math.max(to, Math.floor(value)));
       else setter(Math.min(to, Math.ceil(value)));
       if (t < 1) requestAnimationFrame(step);
     }
+
     requestAnimationFrame(step);
   }
 
   function hpTweenDuration(from: number, to: number, maxHp: number) {
     const delta = Math.abs(from - to);
-    // base: ~28ms por HP (mais lento), clamp 600–1800ms
-    const base = Math.max(600, Math.min(1800, Math.round(delta * 28)));
-    // tail bonus: abranda mais quando termina com pouca vida (ênfase cúbica)
-    const endFrac = to / Math.max(1, maxHp); // 0..1
-    const tail = Math.round(400 * Math.pow(1 - endFrac, 3));
-    // aplica multiplicador global
-    return Math.round((base + tail) * SPEED_MULT);
+    // constant pace: ~50ms por HP; clamp 1200–3500ms (before SPEED_MULT)
+    const base = Math.max(1200, Math.min(3500, Math.round(delta * 50)));
+    return Math.round(base * SPEED_MULT);
   }
 
   // Play a batch of engine events with timing + small sprite feedback
@@ -173,6 +171,14 @@ export default function Battlefield({
     "Fábio wants to fight!"
   );
 
+  // keep last non-empty message to avoid blanks during transitions
+  const [lastNonEmptyMsg, setLastNonEmptyMsg] = useState<string>("");
+  useEffect(() => {
+    if (overrideMsg != null && overrideMsg.trim() !== "") {
+      setLastNonEmptyMsg(overrideMsg);
+    }
+  }, [overrideMsg]);
+
   const messages = (action: string) => {
     switch (action) {
       case "item":
@@ -213,8 +219,7 @@ export default function Battlefield({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Enter") return;
-      if (lockUI) return; // block skipping while animating attacks
-      if (overrideMsg === "") return; // block during pre-animation message handshake
+      if (lockUIRef.current || overrideMsg === "") return; // don't allow skipping while animating/handshaking
       if (
         phase === "start" ||
         phase === "enemySend" ||
@@ -258,7 +263,7 @@ export default function Battlefield({
     <div
       className="bg-stone-200 p-4 max-w-4xl mx-auto"
       onClick={() => {
-        if (lockUI || overrideMsg === "") return;
+        if (lockUIRef.current || overrideMsg === "") return;
         if (
           phase === "start" ||
           phase === "enemySend" ||
@@ -330,7 +335,11 @@ export default function Battlefield({
           <div className="col-span-2">
             <BattleMessages
               message={
-                overrideMsg ?? (lockUI ? "" : messages(selectedAction ?? ""))
+                overrideMsg && overrideMsg.trim() !== ""
+                  ? overrideMsg
+                  : lockUI
+                  ? lastNonEmptyMsg
+                  : messages(selectedAction ?? "")
               }
               className="h-full"
             />
@@ -367,10 +376,13 @@ export default function Battlefield({
                       (m) => m.name === skill?.name
                     );
                     if (idx >= 0) {
+                      lockUIRef.current = true; // Enter guard for same-tick keydown
                       setLockUI(true); // pre-lock to avoid Enter race
                       setSelectedAction(null);
-                      // prevent fallback text while we animate events
-                      setOverrideMsg("");
+                      // Pre-fill the attack message to avoid any blank frame
+                      const preMsg = `${playerMon.name} used ${skill?.name}!`;
+                      setOverrideMsg(preMsg);
+                      setLastNonEmptyMsg(preMsg);
                       const events = engine.doMove(idx);
                       await playEvents(events);
                     }
