@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Container from "../Container";
 
-interface Skill {
+export interface Skill {
   name: string;
   power: number;
   type: string; // e.g., WATER, FIRE, NORMAL (UPPERCASE recommended)

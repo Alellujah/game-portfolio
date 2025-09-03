@@ -1,17 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import useBattleEngine from "../hooks/useBattleEngine";
-import BattleMessages from "../components/BattleMessages";
+import MessagesPane from "./battle/MessagesPane";
 import BattleMenu from "../components/Menu/BattleMenu";
-import Sprite from "../components/Sprite";
-import StatusBar from "../components/StatusBar";
-import FightMenu from "../components/Menu/FightMenu";
 import type { Mon } from "../engine/mons";
-
-// tiny sleep helper
-const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
-
-// global pacing multiplier (higher = slower animations)
-const SPEED_MULT = 2.0; // global pacing (higher = slower)
+import { wait, SPEED_MULT } from "../utils/pacing";
+import useHpTween from "../hooks/useHpTween";
+import StatusRow from "./battle/StatusRow";
+import FightOverlay from "./battle/FightOverlay";
 
 interface Props {
   playerMon: Mon;
@@ -59,56 +54,18 @@ export default function Battlefield({
   useEffect(() => {
     lockUIRef.current = lockUI;
   }, [lockUI]);
-  const [dispEnemyHp, setDispEnemyHp] = useState(engEnemy.hp);
-  const [dispPlayerHp, setDispPlayerHp] = useState(engPlayer.hp);
 
-  const dispEnemyHpRef = useRef(dispEnemyHp);
-  const dispPlayerHpRef = useRef(dispPlayerHp);
-  useEffect(() => {
-    dispEnemyHpRef.current = dispEnemyHp;
-  }, [dispEnemyHp]);
-  useEffect(() => {
-    dispPlayerHpRef.current = dispPlayerHp;
-  }, [dispPlayerHp]);
+  const enemyHp = useHpTween(engEnemy.hp);
+  const playerHp = useHpTween(engPlayer.hp);
 
+  // reset displayed HP when mons change (new battle)
   useEffect(() => {
-    setDispEnemyHp(engEnemy.hp);
-    setDispPlayerHp(engPlayer.hp);
+    enemyHp.reset(engEnemy.hp);
+    playerHp.reset(engPlayer.hp);
   }, [enemyMon.name, playerMon.name]);
 
   const [enemyHit, setEnemyHit] = useState(false);
   const [playerHit, setPlayerHit] = useState(false);
-
-  // tween helper for HP bars (linear, slow)
-  function tweenHp(
-    from: number,
-    to: number,
-    setter: (v: number) => void,
-    duration?: number
-  ) {
-    const d = duration ?? 1800; // slower default tween
-    const start = performance.now();
-    const diff = to - from;
-    const decreasing = diff < 0;
-
-    function step(now: number) {
-      const t = Math.min(1, (now - start) / d);
-      const value = from + diff * t; // linear
-      // round towards target without jumps
-      if (decreasing) setter(Math.max(to, Math.floor(value)));
-      else setter(Math.min(to, Math.ceil(value)));
-      if (t < 1) requestAnimationFrame(step);
-    }
-
-    requestAnimationFrame(step);
-  }
-
-  function hpTweenDuration(from: number, to: number, maxHp: number) {
-    const delta = Math.abs(from - to);
-    // constant pace: ~50ms por HP; clamp 1200–3500ms (before SPEED_MULT)
-    const base = Math.max(1200, Math.min(3500, Math.round(delta * 50)));
-    return Math.round(base * SPEED_MULT);
-  }
 
   // Play a batch of engine events with timing + small sprite feedback
   async function playEvents(evts: any[]) {
@@ -123,20 +80,14 @@ export default function Battlefield({
       if (e.type === "hp") {
         if (e.payload.target === "enemy") {
           setEnemyHit(true);
-          const fromE = dispEnemyHpRef.current;
-          const toE = e.payload.value as number;
-          const durE = hpTweenDuration(fromE, toE, engEnemy.maxHp);
-          tweenHp(fromE, toE, setDispEnemyHp, durE);
+          const durE = enemyHp.to(e.payload.value as number);
           await wait(durE + Math.round(120 * SPEED_MULT));
           setEnemyHit(false);
         } else if (e.payload.target === "player") {
           // switch to enemy turn visuals while player takes damage
           setPhase("enemyTurn");
           setPlayerHit(true);
-          const fromP = dispPlayerHpRef.current;
-          const toP = e.payload.value as number;
-          const durP = hpTweenDuration(fromP, toP, engPlayer.maxHp);
-          tweenHp(fromP, toP, setDispPlayerHp, durP);
+          const durP = playerHp.to(e.payload.value as number);
           await wait(durP + Math.round(120 * SPEED_MULT));
           setPlayerHit(false);
         }
@@ -272,76 +223,42 @@ export default function Battlefield({
           advance();
       }}
     >
-      <div className="grid grid-cols-3 gap-4 items-stretch mb-4">
-        <div
-          className={`col-span-1 flex items-start transition-all duration-500 ${
-            phase === "start"
-              ? "opacity-0 -translate-x-6"
-              : phase === "enemySend"
-              ? "opacity-100 translate-x-0"
-              : "opacity-100 translate-x-0"
-          }`}
-        >
-          <StatusBar
-            hp={engEnemy.maxHp}
-            actualHp={dispEnemyHp}
-            level={enemyMon.level ?? 1}
-            name={enemyMon.name}
-          />
-        </div>
-        <div
-          className={`col-span-2 flex justify-center transition-all duration-500 ${
-            phase === "start"
-              ? "opacity-0 scale-95"
-              : phase === "enemySend"
-              ? "opacity-100 scale-100"
-              : "opacity-100 scale-100"
-          } ${enemyHit ? "animate-hit" : ""}`}
-        >
-          <Sprite spriteUrl={enemyMon.spriteFrontUrl} size={132} />
-        </div>
-      </div>
-      <div className="grid grid-cols-3 gap-4 items-stretch">
-        <div
-          className={`col-span-2 justify-center flex transition-all duration-500 ${
-            phase === "playerSend" ||
-            phase === "playerTurn" ||
-            phase === "enemyTurn"
-              ? "opacity-100 translate-x-0"
-              : "opacity-0 translate-x-6"
-          } ${playerHit ? "animate-hit" : ""}`}
-        >
-          <Sprite spriteUrl={playerMon.spriteBackUrl} size={132} />
-        </div>
-        <div
-          className={`col-span-1 flex items-end transition-all duration-500 ${
-            phase === "playerSend" ||
-            phase === "playerTurn" ||
-            phase === "enemyTurn"
-              ? "opacity-100 translate-x-0"
-              : "opacity-0 translate-x-6"
-          }`}
-        >
-          <StatusBar
-            hp={engPlayer.maxHp}
-            actualHp={dispPlayerHp}
-            level={playerMon.level ?? 1}
-            name={playerMon.name}
-          />
-        </div>
-      </div>
+      <StatusRow
+        side="enemy"
+        show={phase !== "start"}
+        hit={enemyHit}
+        spriteUrl={enemyMon.spriteFrontUrl}
+        status={{
+          name: enemyMon.name,
+          level: enemyMon.level ?? 1,
+          hp: engEnemy.maxHp,
+          actualHp: enemyHp.disp,
+        }}
+      />
+      <StatusRow
+        side="player"
+        show={
+          phase === "playerSend" ||
+          phase === "playerTurn" ||
+          phase === "enemyTurn"
+        }
+        hit={playerHit}
+        spriteUrl={playerMon.spriteBackUrl}
+        status={{
+          name: playerMon.name,
+          level: playerMon.level ?? 1,
+          hp: engPlayer.maxHp,
+          actualHp: playerHp.disp,
+        }}
+      />
       <div className="relative">
         <div className="grid grid-cols-3 gap-4 items-stretch">
           <div className="col-span-2">
-            <BattleMessages
-              message={
-                overrideMsg && overrideMsg.trim() !== ""
-                  ? overrideMsg
-                  : lockUI
-                  ? lastNonEmptyMsg
-                  : messages(selectedAction ?? "")
-              }
-              className="h-full"
+            <MessagesPane
+              overrideMsg={overrideMsg}
+              lastNonEmptyMsg={lastNonEmptyMsg}
+              lockUI={lockUI}
+              fallback={messages(selectedAction ?? "")}
             />
           </div>
           <div
@@ -354,43 +271,31 @@ export default function Battlefield({
         </div>
 
         {selectedAction === "fight" && canInteract && (
-          <>
-            {/* backdrop */}
-            <div
-              className="absolute inset-0 bg-black/40 z-20"
-              onClick={() => setSelectedAction(null)}
-            />
-            {/* overlayed fight menu */}
-            <div className="absolute inset-0 z-30 grid place-items-center">
-              <div className="w-full">
-                <FightMenu
-                  skills={(engPlayer.moves || []).map((mv: any) => ({
-                    name: mv.name,
-                    power: mv.power ?? 10,
-                    type: mv.type ?? "NORMAL",
-                    pp: mv.pp ?? 10,
-                    maxPP: mv.pp ?? 10,
-                  }))}
-                  onSelect={async (skill) => {
-                    const idx = (engPlayer.moves || []).findIndex(
-                      (m) => m.name === skill?.name
-                    );
-                    if (idx >= 0) {
-                      lockUIRef.current = true; // Enter guard for same-tick keydown
-                      setLockUI(true); // pre-lock to avoid Enter race
-                      setSelectedAction(null);
-                      // Pre-fill the attack message to avoid any blank frame
-                      const preMsg = `${playerMon.name} used ${skill?.name}!`;
-                      setOverrideMsg(preMsg);
-                      setLastNonEmptyMsg(preMsg);
-                      const events = engine.doMove(idx);
-                      await playEvents(events);
-                    }
-                  }}
-                />
-              </div>
-            </div>
-          </>
+          <FightOverlay
+            moves={(engPlayer.moves || []).map((mv: any) => ({
+              name: mv.name,
+              power: mv.power ?? 10,
+              type: mv.type ?? "NORMAL",
+              pp: mv.pp ?? 10,
+              maxPP: mv.pp ?? 10,
+            }))}
+            onCancel={() => setSelectedAction(null)}
+            onSelect={async (skill) => {
+              const idx = (engPlayer.moves || []).findIndex(
+                (m: any) => m.name === skill?.name
+              );
+              if (idx >= 0) {
+                lockUIRef.current = true; // Enter guard for same-tick keydown
+                setLockUI(true); // pre-lock to avoid Enter race
+                setSelectedAction(null);
+                const preMsg = `${playerMon.name} used ${skill?.name}!`;
+                setOverrideMsg(preMsg);
+                setLastNonEmptyMsg(preMsg);
+                const events = engine.doMove(idx);
+                await playEvents(events);
+              }
+            }}
+          />
         )}
       </div>
     </div>
