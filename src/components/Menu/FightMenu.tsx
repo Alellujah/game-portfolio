@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Container from "../Container";
 
 interface Skill {
@@ -31,38 +31,38 @@ function FightMenu({ skills, onSelect }: FightMenuProps) {
 
   const selected = skills[safeIndex];
 
-  const onKey = useCallback(
-    (e: KeyboardEvent) => {
-      if (!skills.length) return;
-      if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setIndex((i) => (i - 1 + skills.length) % skills.length);
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setIndex((i) => (i + 1) % skills.length);
-      } else if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        if (skills[safeIndex]) onSelect(skills[safeIndex]);
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        onSelect(null);
-      }
-    },
-    [skills, safeIndex, onSelect]
-  );
+  function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    // Trap navigation inside the FightMenu
+    e.stopPropagation();
+    if (!skills.length) return;
+
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setIndex((i) => (i - 1 + skills.length) % skills.length);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setIndex((i) => (i + 1) % skills.length);
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      if (skills[safeIndex]) onSelect(skills[safeIndex]);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      onSelect(null);
+    }
+  }
 
   useEffect(() => {
-    const node = containerRef.current;
-    node?.focus();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onKey]);
+    containerRef.current?.focus();
+  }, []);
 
   return (
     <Container className="w-full bg-white">
       <div
         ref={containerRef}
         tabIndex={0}
+        onKeyDown={handleKeyDown}
+        role="dialog"
+        aria-modal="true"
         className="w-full border-black bg-white p-2 outline-none"
       >
         <div className="grid grid-cols-3 gap-2">
@@ -94,7 +94,10 @@ function FightMenu({ skills, onSelect }: FightMenuProps) {
                   <li key={i} className="mt-2 first:mt-0">
                     <button
                       onMouseEnter={() => setIndex(i)}
-                      onClick={() => onSelect(s)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelect(s);
+                      }}
                       className="w-full text-left text-black hover:bg-black hover:text-white px-1"
                     >
                       <span className="inline-block w-4 mr-2">

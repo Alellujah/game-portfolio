@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import Container from "../Container";
 
 type BattleMenuProps = {
+  disabled?: boolean;
   onSelect: (action: string) => void;
 };
 
@@ -12,7 +13,7 @@ const ACTIONS = [
   { label: "RUN", value: "run" },
 ];
 
-function BattleMenu({ onSelect }: BattleMenuProps) {
+function BattleMenu({ onSelect, disabled }: BattleMenuProps) {
   const [selected, setSelected] = useState(0);
   const btnRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -43,6 +44,7 @@ function BattleMenu({ onSelect }: BattleMenuProps) {
       <div className="grid grid-cols-2 gap-4">
         {ACTIONS.map((action, idx) => (
           <button
+            disabled={disabled}
             key={action.value}
             ref={(el) => {
               btnRefs.current[idx] = el;

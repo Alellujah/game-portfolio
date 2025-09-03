@@ -6,6 +6,7 @@ export type Mon = {
   attack: number;
   defense: number;
   speed: number;
+  level?: number;
   moves: {
     name: string;
     type: string;

@@ -1,23 +1,21 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import Menu from "./Battlefield";
 import MONS from "../engine/mons";
+import Battlefield from "./Battlefield";
 
-const meta: Meta<typeof Menu> = {
+const meta: Meta<typeof Battlefield> = {
   title: "Features/Battlefield",
-  component: Menu,
+  component: Battlefield,
   tags: ["autodocs"],
 };
 
 export default meta;
 
-type Story = StoryObj<typeof Menu>;
+type Story = StoryObj<typeof Battlefield>;
 
 export const Default: Story = {
   args: {
-    playerSpriteUrl: "public/players/back-recruiter-green.png",
-    enemySpriteUrl: "public/players/nerd_it_guy-green.png",
-    playerMon: { ...MONS["remotemon"], maxHp: 100, level: 50 },
-    enemyMon: { ...MONS["paycheckuchu"], maxHp: 120, level: 45 },
+    playerMon: { ...MONS["remotemon"], level: 50 },
+    enemyMon: { ...MONS["paycheckuchu"], level: 45 },
     playerMons: [MONS["remotemon"]],
     enemyMons: [MONS["remotemon"]],
   },
