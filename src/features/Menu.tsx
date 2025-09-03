@@ -14,12 +14,36 @@ export default function Menu() {
     { name: "UX POLISH", type: "NORMAL", pp: 20, maxPP: 20, power: 25 },
     { name: "DOCKER SLAM", type: "NORMAL", pp: 10, maxPP: 10, power: 50 },
   ];
+  const spriteUrl = "public/back-recruiter-no-gb.png";
+  const enemySpriteUrl = "public/nerd_it_guy-removebg-preview.png";
 
+  const messages = (action: string) => {
+    switch (action) {
+      case "fight":
+        return "Choose a move.";
+      case "item":
+        return "You have no items.";
+      case "chg":
+        return "No one to change, you're alone mate.";
+      case "run":
+        return "Can't ghost this time!";
+      default:
+        return "What will you do?";
+    }
+  };
   return (
     <>
+      <div className="grid grid-cols-3 gap-4 items-stretch mb-4">
+        <div className="col-span-1 flex items-start">
+          <StatusBar hp={120} actualHp={90} level={6} name="Enemy" />
+        </div>
+        <div className="col-span-2 flex justify-end">
+          <Sprite spriteUrl={enemySpriteUrl} />
+        </div>
+      </div>
       <div className="grid grid-cols-3 gap-4 items-stretch">
         <div className="col-span-2">
-          <Sprite spriteUrl="public/back-recruiter-no-gb.png" />
+          <Sprite spriteUrl={spriteUrl} />
         </div>
         <div className="col-span-1 flex items-end">
           <StatusBar hp={100} actualHp={75} level={5} name="Hero" />
@@ -28,7 +52,10 @@ export default function Menu() {
       <div className="relative">
         <div className="grid grid-cols-3 gap-4 items-stretch">
           <div className="col-span-2">
-            <BattleMessages message="What will you do?" className="h-full" />
+            <BattleMessages
+              message={messages(selectedAction ?? "")}
+              className="h-full"
+            />
           </div>
           <div className="col-span-1">
             <BattleMenu onSelect={(action) => setSelectedAction(action)} />
