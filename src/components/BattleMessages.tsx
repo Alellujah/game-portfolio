@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import DecorativeCorners from "./DecorativeCorners";
 import Container from "./Container";
 
 type Props = {
@@ -31,8 +30,8 @@ function BattleMessages({ message, speed = 30, className = "" }: Props) {
   }, [message, speed]);
 
   return (
-    <Container fixedWidth>
-      <p className="text-black text-sm leading-snug">{displayed}</p>
+    <Container fixedWidth className={className}>
+      <p className={`text-black text-xl leading-snug`}>{displayed}</p>
     </Container>
   );
 }

@@ -11,7 +11,7 @@ interface Skill {
 
 interface FightMenuProps {
   skills: Skill[];
-  onSelect: (skill: Skill) => void;
+  onSelect: (skill: Skill | null) => void;
 }
 
 /**
@@ -43,6 +43,9 @@ function FightMenu({ skills, onSelect }: FightMenuProps) {
       } else if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         if (skills[safeIndex]) onSelect(skills[safeIndex]);
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        onSelect(null);
       }
     },
     [skills, safeIndex, onSelect]
@@ -56,7 +59,7 @@ function FightMenu({ skills, onSelect }: FightMenuProps) {
   }, [onKey]);
 
   return (
-    <Container>
+    <Container className="w-full bg-white">
       <div
         ref={containerRef}
         tabIndex={0}
@@ -92,7 +95,7 @@ function FightMenu({ skills, onSelect }: FightMenuProps) {
                     <button
                       onMouseEnter={() => setIndex(i)}
                       onClick={() => onSelect(s)}
-                      className="w-full text-left text-sm text-black hover:bg-black hover:text-white px-1"
+                      className="w-full text-left text-black hover:bg-black hover:text-white px-1"
                     >
                       <span className="inline-block w-4 mr-2">
                         {isSel ? "▶" : ""}

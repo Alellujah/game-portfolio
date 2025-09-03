@@ -14,7 +14,7 @@ function StatusBar({ hp, level, name, actualHp }: StatusBarProps) {
   else if (hpPercent <= 50) barColor = "bg-yellow-400";
 
   return (
-    <Container>
+    <Container className="w-full p-2 mb-4">
       <div className="text-center mb-1">
         <div className="uppercase tracking-wide text-black text-base font-bold">
           {name}
