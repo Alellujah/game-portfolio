@@ -64,7 +64,7 @@ export interface BattleState {
 
 export interface Event {
   type: "message" | "hp" | "end";
-  payload: any;
+  payload: string | { target: "enemy" | "player"; value: number };
 }
 
 export interface TurnAction {
@@ -133,7 +133,7 @@ export function performTurn(
       });
       if (enemy.hp <= 0) {
         state.ended = "won";
-        events.push({ type: "end", payload: "Enemy fainted! You win!" });
+        events.push({ type: "end", payload: `${enemy.name} fainted!` });
         return events;
       }
     } else {
@@ -167,10 +167,7 @@ export function performTurn(
         });
         if (player.hp <= 0) {
           state.ended = "lost";
-          events.push({
-            type: "end",
-            payload: `${player.name} fainted! You lose!`,
-          });
+          events.push({ type: "end", payload: `${player.name} fainted!` });
         }
       } else {
         events.push({

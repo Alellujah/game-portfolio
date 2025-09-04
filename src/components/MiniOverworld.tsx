@@ -116,7 +116,7 @@ export default function MiniOverworld() {
         case "+": // decrease sheet columns
           setSheetCols((c) => Math.max(1, c - 1));
           setMessage(
-            (m) =>
+            () =>
               `🔧 sheetCols=${Math.max(1, sheetCols - 1)} (tilePx≈${Math.floor(
                 SHEET_IMG_PX / Math.max(1, sheetCols - 1)
               )})`
@@ -125,7 +125,7 @@ export default function MiniOverworld() {
         case "]": // increase sheet columns
           setSheetCols((c) => Math.min(64, c + 1));
           setMessage(
-            (m) =>
+            () =>
               `🔧 sheetCols=${Math.min(64, sheetCols + 1)} (tilePx≈${Math.floor(
                 SHEET_IMG_PX / Math.min(64, sheetCols + 1)
               )})`
@@ -139,7 +139,7 @@ export default function MiniOverworld() {
         // toggle calibration overlay
         setCalib((v) => !v);
         setMessage(
-          (m) =>
+          () =>
             `🧪 Calibration: ${
               !calib ? "ON" : "OFF"
             } (cols=${sheetCols}, tilePx≈${sheetTilePx})`
@@ -621,7 +621,6 @@ function TreeTileSVG() {
 // Place file at: public/assets/player.png
 const PLAYER_SHEET_SRC = "/player.png";
 const PLAYER_COLS = 2; // 2x2 grid in your image
-const PLAYER_ROWS = 2;
 // If your player.png is square (e.g., 768x768), each frame size = image/cols
 const PLAYER_IMG_PX = 768; // your image is 768x768 per attachment
 const PLAYER_TILE_PX = Math.floor(PLAYER_IMG_PX / PLAYER_COLS);
