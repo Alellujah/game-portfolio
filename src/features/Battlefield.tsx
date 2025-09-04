@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState, useRef } from "react";
 import useBattleEngine from "../hooks/useBattleEngine";
 import MessagesPane from "./battle/MessagesPane";
@@ -7,6 +8,8 @@ import { wait, SPEED_MULT } from "../utils/pacing";
 import useHpTween from "../hooks/useHpTween";
 import StatusRow from "./battle/StatusRow";
 import FightOverlay from "./battle/FightOverlay";
+import ItemOverlay from "./battle/ItemOverlay";
+import type { BagItem } from "../components/Menu/ItemMenu";
 
 interface Props {
   playerMon: Mon;
@@ -17,11 +20,24 @@ interface Props {
 
 export default function Battlefield({
   enemyMon,
-  enemyMons,
   playerMon,
   playerMons,
+  enemyMons,
 }: Props) {
+  void playerMons;
+  void enemyMons;
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
+  const [bag, setBag] = useState<Record<string, { quantity: number; description: string }>>({
+    Beer: { quantity: 2, description: "Restores 50 HP. Cheers!" },
+    Raise: { quantity: 1, description: "Boosts attack by 20. Time for a promotion!" },
+  });
+  const availableItems: BagItem[] = Object.entries(bag)
+    .filter(([, info]) => info.quantity > 0)
+    .map(([name, info]) => ({
+      name,
+      quantity: info.quantity,
+      description: info.description,
+    }));
 
   // Bridge mons to engine shape (fallback stats if missing)
   const toEngineMon = (m: Mon) => ({
@@ -133,7 +149,9 @@ export default function Battlefield({
   const messages = (action: string) => {
     switch (action) {
       case "item":
-        return "You have no items.";
+        return availableItems.length > 0
+          ? "Which item will you use?"
+          : "You have no items.";
       case "chg":
         return "No one to change, you're alone mate.";
       case "run":
@@ -294,6 +312,27 @@ export default function Battlefield({
                 const events = engine.doMove(idx);
                 await playEvents(events);
               }
+            }}
+          />
+        )}
+        {selectedAction === "item" && canInteract && availableItems.length > 0 && (
+          <ItemOverlay
+            items={availableItems}
+            onCancel={() => setSelectedAction(null)}
+            onSelect={async (item) => {
+              if (!item) return;
+              lockUIRef.current = true;
+              setLockUI(true);
+              setSelectedAction(null);
+              const events = engine.useItem(item.name);
+              setBag((b) => ({
+                ...b,
+                [item.name]: {
+                  ...b[item.name],
+                  quantity: b[item.name].quantity - 1,
+                },
+              }));
+              await playEvents(events);
             }}
           />
         )}

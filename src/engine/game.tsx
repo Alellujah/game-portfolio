@@ -14,23 +14,52 @@ export function calculateDamage(
   return Math.floor(baseDamage * randomFactor);
 }
 
+export interface StatusEffects {
+  /** Temporary increase to attack stat */
+  attackBoost?: number;
+}
+
+/**
+ * Apply an item's effect to the given mon and return the resulting events.
+ * The caller is responsible for providing the target (player or enemy) to
+ * correctly update HP bars.
+ */
 export function applyItemEffect(
   item: string,
-  currentHp: number,
-  maxHp: number
-): number {
+  mon: Mon,
+  target: "player" | "enemy"
+): Event[] {
+  const events: Event[] = [];
   switch (item) {
-    case "Snickers Bar":
-      return Math.min(currentHp + 20, maxHp);
-    case "Beer":
-      return Math.min(currentHp + 50, maxHp);
-    case "Shot of Vodka":
-      return Math.min(currentHp + 200, maxHp);
-    case "Good Night Sleep":
-      return maxHp;
+    case "Beer": {
+      mon.hp = Math.min(mon.maxHp, mon.hp + 50);
+      events.push({
+        type: "message",
+        payload: `${mon.name} chugged some Beer!`,
+      });
+      events.push({
+        type: "hp",
+        payload: { target, value: mon.hp },
+      });
+      break;
+    }
+    case "Raise": {
+      mon.status = mon.status || {};
+      mon.status.attackBoost = (mon.status.attackBoost ?? 0) + 20;
+      events.push({
+        type: "message",
+        payload: `${mon.name}'s attack rose!`,
+      });
+      break;
+    }
     default:
-      return currentHp; // No effect if item is unknown
+      events.push({
+        type: "message",
+        payload: "But nothing happened!",
+      });
+      break;
   }
+  return events;
 }
 
 // --- Battle engine types and functions ---
@@ -44,6 +73,7 @@ export interface Mon {
   defense: number;
   speed: number;
   moves: Move[];
+  status?: StatusEffects;
 }
 
 export interface Move {
@@ -64,12 +94,13 @@ export interface BattleState {
 
 export interface Event {
   type: "message" | "hp" | "end";
-  payload: any;
+  payload: unknown;
 }
 
 export interface TurnAction {
-  kind: "move" | "flee";
+  kind: "move" | "flee" | "item";
   index?: number;
+  item?: string;
 }
 
 export type RNG = () => number;
@@ -78,8 +109,8 @@ export const defaultRng: RNG = () => Math.random();
 /** create a fresh battle */
 export function createBattle(player: Mon, enemy: Mon): BattleState {
   return {
-    player: { active: player },
-    enemy: { active: enemy },
+    player: { active: { ...player, status: {} } },
+    enemy: { active: { ...enemy, status: {} } },
     turn: "player",
     log: [],
   };
@@ -116,9 +147,10 @@ export function performTurn(
   if (action.kind === "move" && action.index !== undefined) {
     const move = player.moves[action.index];
     if (move && rng() <= (move.accuracy ?? 100) / 100) {
+      const playerAtk = player.attack + (player.status?.attackBoost ?? 0);
       const dmg = calculateDamage(
         player.level,
-        player.attack,
+        playerAtk,
         enemy.defense,
         move.power
       );
@@ -144,15 +176,24 @@ export function performTurn(
     }
   }
 
+  if (action.kind === "item" && action.item) {
+    events.push({
+      type: "message",
+      payload: `${player.name} used ${action.item}!`,
+    });
+    events.push(...applyItemEffect(action.item, player, "player"));
+  }
+
   // Enemy's turn if still alive
   if (!state.ended) {
     const enemyAction = enemyAI(state);
     if (enemyAction.kind === "move" && enemyAction.index !== undefined) {
       const move = enemy.moves[enemyAction.index];
       if (move && rng() <= (move.accuracy ?? 100) / 100) {
+        const enemyAtk = enemy.attack + (enemy.status?.attackBoost ?? 0);
         const dmg = calculateDamage(
           enemy.level,
-          enemy.attack,
+          enemyAtk,
           player.defense,
           move.power
         );
@@ -184,7 +225,7 @@ export function performTurn(
   state.turn = "player";
   state.log.push(
     ...events.map((e) =>
-      e.type === "message" || e.type === "end" ? e.payload : ""
+      e.type === "message" || e.type === "end" ? (e.payload as string) : ""
     )
   );
   return events;

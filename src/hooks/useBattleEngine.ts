@@ -29,6 +29,8 @@ export type UseBattleEngine = {
   ended: BattleState["ended"] | undefined;
   /** run player's move by index (0..3). also runs enemy reply if battle not ended */
   doMove: (index: number) => BattleEvent[];
+  /** use an item by name */
+  useItem: (item: string) => BattleEvent[];
   /** attempt to flee (ends battle immediately) */
   flee: () => BattleEvent[];
   /** reset battle to initial mons */
@@ -86,6 +88,14 @@ export default function useBattleEngine(
     [apply, rng]
   );
 
+  const useItem = useCallback(
+    (item: string) => {
+      const events = performTurn(stateRef.current, { kind: "item", item }, rng);
+      return apply(events);
+    },
+    [apply, rng]
+  );
+
   const flee = useCallback(() => {
     const events = performTurn(stateRef.current, { kind: "flee" }, rng);
     return apply(events);
@@ -110,6 +120,7 @@ export default function useBattleEngine(
     log: stateSnap.log,
     ended,
     doMove,
+    useItem,
     flee,
     reset,
   };
