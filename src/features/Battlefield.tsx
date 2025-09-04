@@ -256,8 +256,14 @@ export default function Battlefield({ enemyMons, playerMons }: Props) {
       }}
     >
       <div className="flex justify-between text-sm mb-2">
-        <span>Enemy mons: {enemyTeam.filter((m) => m.hp > 0).length}</span>
-        <span>Your mons: {playerTeam.filter((m) => m.hp > 0).length}</span>
+        <span>
+          Enemy mons: {enemyTeam.filter((m) => m.hp > 0).length}/
+          {enemyTeam.length}
+        </span>
+        <span>
+          Your mons: {playerTeam.filter((m) => m.hp > 0).length}/
+          {playerTeam.length}
+        </span>
       </div>
       <StatusRow
         side="enemy"

@@ -16,7 +16,7 @@ export const Default: Story = {
   args: {
     playerSpriteUrl: "public/players/back-recruiter-green.png",
     enemySpriteUrl: "public/players/nerd_it_guy-green.png",
-    playerMons: [MONS["remotemon"]],
-    enemyMons: [MONS["remotemon"]],
+    playerMons: [MONS["remotemon"], MONS["paycheckuchu"]],
+    enemyMons: [MONS["remotemon"], MONS["paycheckuchu"]],
   },
 };

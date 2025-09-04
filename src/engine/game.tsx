@@ -180,9 +180,7 @@ export function performTurn(
 
   state.turn = "player";
   state.log.push(
-    ...events.map((e) =>
-      e.type === "message" || e.type === "end" ? e.payload : ""
-    )
+    ...events.map((e) => (typeof e.payload === "string" ? e.payload : ""))
   );
   return events;
 }
