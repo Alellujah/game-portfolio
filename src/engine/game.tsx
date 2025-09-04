@@ -35,8 +35,34 @@ export function applyItemEffect(
 
 // --- Battle engine types and functions ---
 
+type TypeChartEntry = { weak: string[]; resist: string[] };
+
+const TYPE_CHART: Record<string, TypeChartEntry> = {
+  NORMAL: { weak: ["FIGHTING"], resist: [] },
+  FIGHTING: { weak: ["PSYCHIC", "FLYING"], resist: ["BUG", "STEEL"] },
+  PSYCHIC: { weak: ["BUG"], resist: ["FIGHTING"] },
+  STEEL: { weak: ["FIGHTING"], resist: ["NORMAL", "BUG", "FLYING"] },
+  ELECTRIC: { weak: ["DRAGON"], resist: ["FLYING", "STEEL"] },
+  DRAGON: { weak: ["DRAGON"], resist: ["ELECTRIC"] },
+  BUG: { weak: ["FLYING"], resist: ["FIGHTING", "PSYCHIC"] },
+  FLYING: { weak: ["ELECTRIC"], resist: ["BUG", "FIGHTING"] },
+  GHOST: { weak: ["GHOST"], resist: ["BUG", "NORMAL"] },
+};
+
+export function getTypeEffectiveness(
+  attackType: string | undefined,
+  defenderType: string
+): number {
+  if (!attackType) return 1;
+  const chart = TYPE_CHART[defenderType];
+  if (chart?.weak.includes(attackType)) return 2;
+  if (chart?.resist.includes(attackType)) return 0.5;
+  return 1;
+}
+
 export interface Mon {
   name: string;
+  type: string;
   level: number;
   hp: number;
   maxHp: number;
@@ -64,7 +90,7 @@ export interface BattleState {
 
 export interface Event {
   type: "message" | "hp" | "end";
-  payload: any;
+  payload: unknown;
 }
 
 export interface TurnAction {
@@ -95,6 +121,78 @@ export function enemyAI(state: BattleState): TurnAction {
   return { kind: "move", index: idx };
 }
 
+function determineOrder(
+  player: Mon,
+  enemy: Mon,
+  rng: RNG
+): ("player" | "enemy")[] {
+  if (player.speed > enemy.speed) return ["player", "enemy"];
+  if (enemy.speed > player.speed) return ["enemy", "player"];
+  return rng() < 0.5 ? ["player", "enemy"] : ["enemy", "player"];
+}
+
+function canDoubleAttack(attacker: Mon, defender: Mon, rng: RNG): boolean {
+  if (attacker.speed >= defender.speed * 2) return true;
+  const chance =
+    Math.max(0, attacker.speed - defender.speed) /
+    (attacker.speed + defender.speed);
+  return rng() < chance;
+}
+
+function performAttack(
+  state: BattleState,
+  attacker: Mon,
+  defender: Mon,
+  move: Move | undefined,
+  attackerLabel: "player" | "enemy",
+  events: Event[],
+  rng: RNG
+): boolean {
+  if (!move) return false;
+  if (rng() <= (move.accuracy ?? 100) / 100) {
+    const base = calculateDamage(
+      attacker.level,
+      attacker.attack,
+      defender.defense,
+      move.power
+    );
+    const mult = getTypeEffectiveness(move.type, defender.type);
+    const dmg = Math.floor(base * mult);
+    defender.hp = Math.max(0, defender.hp - dmg);
+    events.push({
+      type: "message",
+      payload: `${attacker.name} used ${move.name}!`,
+    });
+    if (mult > 1) {
+      events.push({ type: "message", payload: "It's super effective!" });
+    } else if (mult < 1) {
+      events.push({
+        type: "message",
+        payload: "It's not very effective...",
+      });
+    }
+    const target = attackerLabel === "player" ? "enemy" : "player";
+    events.push({ type: "hp", payload: { target, value: defender.hp } });
+    if (defender.hp <= 0) {
+      state.ended = attackerLabel === "player" ? "won" : "lost";
+      events.push({
+        type: "end",
+        payload:
+          target === "enemy"
+            ? "Enemy fainted! You win!"
+            : `${state.player.active.name} fainted! You lose!`,
+      });
+      return true;
+    }
+  } else {
+    events.push({
+      type: "message",
+      payload: `${attacker.name}'s attack missed!`,
+    });
+  }
+  return false;
+}
+
 /** perform a turn for the player (and possibly enemy) */
 export function performTurn(
   state: BattleState,
@@ -113,70 +211,35 @@ export function performTurn(
     return events;
   }
 
-  if (action.kind === "move" && action.index !== undefined) {
-    const move = player.moves[action.index];
-    if (move && rng() <= (move.accuracy ?? 100) / 100) {
-      const dmg = calculateDamage(
-        player.level,
-        player.attack,
-        enemy.defense,
-        move.power
-      );
-      enemy.hp = Math.max(0, enemy.hp - dmg);
-      events.push({
-        type: "message",
-        payload: `${player.name} used ${move.name}!`,
-      });
-      events.push({
-        type: "hp",
-        payload: { target: "enemy", value: enemy.hp },
-      });
-      if (enemy.hp <= 0) {
-        state.ended = "won";
-        events.push({ type: "end", payload: "Enemy fainted! You win!" });
-        return events;
-      }
-    } else {
-      events.push({
-        type: "message",
-        payload: `${player.name}'s attack missed!`,
-      });
-    }
-  }
+  const playerMoveIdx = action.kind === "move" ? action.index : undefined;
+  const enemyAction = enemyAI(state);
+  const enemyMoveIdx =
+    enemyAction.kind === "move" ? enemyAction.index : undefined;
 
-  // Enemy's turn if still alive
-  if (!state.ended) {
-    const enemyAction = enemyAI(state);
-    if (enemyAction.kind === "move" && enemyAction.index !== undefined) {
-      const move = enemy.moves[enemyAction.index];
-      if (move && rng() <= (move.accuracy ?? 100) / 100) {
-        const dmg = calculateDamage(
-          enemy.level,
-          enemy.attack,
-          player.defense,
-          move.power
-        );
-        player.hp = Math.max(0, player.hp - dmg);
-        events.push({
-          type: "message",
-          payload: `${enemy.name} used ${move.name}!`,
-        });
-        events.push({
-          type: "hp",
-          payload: { target: "player", value: player.hp },
-        });
-        if (player.hp <= 0) {
-          state.ended = "lost";
-          events.push({
-            type: "end",
-            payload: `${player.name} fainted! You lose!`,
-          });
-        }
-      } else {
-        events.push({
-          type: "message",
-          payload: `${enemy.name}'s attack missed!`,
-        });
+  const order = determineOrder(player, enemy, rng);
+
+  for (const who of order) {
+    const attacker = who === "player" ? player : enemy;
+    const defender = who === "player" ? enemy : player;
+    const moveIdx = who === "player" ? playerMoveIdx : enemyMoveIdx;
+    const move = attacker.moves[moveIdx ?? 0];
+    const fainted = performAttack(
+      state,
+      attacker,
+      defender,
+      move,
+      who,
+      events,
+      rng
+    );
+    if (fainted) break;
+    if (canDoubleAttack(attacker, defender, rng)) {
+      events.push({
+        type: "message",
+        payload: `${attacker.name} strikes again!`,
+      });
+      if (performAttack(state, attacker, defender, move, who, events, rng)) {
+        break;
       }
     }
   }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState, useRef } from "react";
 import useBattleEngine from "../hooks/useBattleEngine";
 import MessagesPane from "./battle/MessagesPane";
@@ -11,21 +12,18 @@ import FightOverlay from "./battle/FightOverlay";
 interface Props {
   playerMon: Mon;
   enemyMon: Mon;
-  playerMons: Mon[];
-  enemyMons: Mon[];
 }
 
 export default function Battlefield({
   enemyMon,
-  enemyMons,
   playerMon,
-  playerMons,
 }: Props) {
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
 
   // Bridge mons to engine shape (fallback stats if missing)
   const toEngineMon = (m: Mon) => ({
     name: m.name,
+    type: (m as any).type ?? "NORMAL",
     level: (m as any).level ?? 5,
     hp: m.hp, // current HP starts full
     maxHp: (m as any).maxHp ?? m.hp,
@@ -36,6 +34,7 @@ export default function Battlefield({
       name: mv.name,
       power: mv.power ?? 10,
       accuracy: mv.accuracy ?? 95,
+      type: mv.type,
     })),
   });
 

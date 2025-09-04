@@ -32,8 +32,6 @@ export default function BattleScene({
         <Battlefield
           playerMon={playerMons[0]}
           enemyMon={enemyMons[0]}
-          playerMons={playerMons}
-          enemyMons={enemyMons}
         />
       )}
 
