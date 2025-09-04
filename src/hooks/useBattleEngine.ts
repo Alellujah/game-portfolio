@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   createBattle,
   performTurn,
@@ -101,6 +101,16 @@ export default function useBattleEngine(
   }, [opts.enemy, opts.player, sync]);
 
   const ended = stateSnap.ended;
+
+  // Recreate battle whenever the provided mons change
+  useEffect(() => {
+    stateRef.current = createBattle(
+      structuredClone(opts.player),
+      structuredClone(opts.enemy)
+    );
+    setLastEvents([]);
+    sync();
+  }, [opts.player, opts.enemy, sync]);
 
   return {
     state: stateSnap,

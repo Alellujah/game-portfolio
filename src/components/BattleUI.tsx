@@ -308,6 +308,7 @@ export default function BattleUI({
 }
 
 // ---------------- Minimal example data ----------------
+// eslint-disable-next-line react-refresh/only-export-components
 export const DemoPlayer: Mon = {
   name: "Fábio",
   level: 12,
@@ -321,6 +322,7 @@ export const DemoPlayer: Mon = {
   ],
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const DemoEnemy: Mon = {
   name: "Bug Report",
   level: 10,

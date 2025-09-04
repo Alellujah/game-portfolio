@@ -7,21 +7,24 @@ import { wait, SPEED_MULT } from "../utils/pacing";
 import useHpTween from "../hooks/useHpTween";
 import StatusRow from "./battle/StatusRow";
 import FightOverlay from "./battle/FightOverlay";
+import SwitchOverlay from "./battle/SwitchOverlay";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 interface Props {
-  playerMon: Mon;
-  enemyMon: Mon;
   playerMons: Mon[];
   enemyMons: Mon[];
 }
 
-export default function Battlefield({
-  enemyMon,
-  enemyMons,
-  playerMon,
-  playerMons,
-}: Props) {
+export default function Battlefield({ enemyMons, playerMons }: Props) {
+  const [playerTeam, setPlayerTeam] = useState<Mon[]>(playerMons);
+  const [enemyTeam, setEnemyTeam] = useState<Mon[]>(enemyMons);
+  const [playerIdx, setPlayerIdx] = useState(0);
+  const [enemyIdx, setEnemyIdx] = useState(0);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
+
+  const playerMon = playerTeam[playerIdx];
+  const enemyMon = enemyTeam[enemyIdx];
 
   // Bridge mons to engine shape (fallback stats if missing)
   const toEngineMon = (m: Mon) => ({
@@ -66,6 +69,7 @@ export default function Battlefield({
 
   const [enemyHit, setEnemyHit] = useState(false);
   const [playerHit, setPlayerHit] = useState(false);
+  const [showSwitch, setShowSwitch] = useState(false);
 
   // Play a batch of engine events with timing + small sprite feedback
   async function playEvents(evts: any[]) {
@@ -95,17 +99,45 @@ export default function Battlefield({
       }
       if (e.type === "end") {
         setOverrideMsg(e.payload);
-        // decide result from engine.state
-        if (engine.ended === "won") setPhase("won");
-        else if (engine.ended === "lost") setPhase("lost");
         await wait(800);
       }
     }
-    // if battle not ended, return to player's turn and unlock UI
-    if (!engine.ended) {
+
+    // update team HP with results from engine
+    const updatedPlayer = [...playerTeam];
+    updatedPlayer[playerIdx] = { ...updatedPlayer[playerIdx], hp: engPlayer.hp };
+    setPlayerTeam(updatedPlayer);
+    const updatedEnemy = [...enemyTeam];
+    updatedEnemy[enemyIdx] = { ...updatedEnemy[enemyIdx], hp: engEnemy.hp };
+    setEnemyTeam(updatedEnemy);
+
+    if (engine.ended === "won") {
+      const nextEnemy = updatedEnemy.findIndex(
+        (m, i) => i !== enemyIdx && m.hp > 0
+      );
+      if (nextEnemy !== -1) {
+        setEnemyIdx(nextEnemy);
+        setOverrideMsg(`Fábio sends ${updatedEnemy[nextEnemy].name}!`);
+        await wait(800);
+        setPhase("playerTurn");
+        setOverrideMsg(null);
+      } else {
+        setPhase("won");
+      }
+    } else if (engine.ended === "lost") {
+      const nextPlayer = updatedPlayer.findIndex(
+        (m, i) => i !== playerIdx && m.hp > 0
+      );
+      if (nextPlayer !== -1) {
+        setShowSwitch(true);
+      } else {
+        setPhase("lost");
+      }
+    } else {
       setPhase("playerTurn");
-      setOverrideMsg(null); // fallback to prompt on your turn
+      setOverrideMsg(null);
     }
+
     setLockUI(false);
   }
 
@@ -135,7 +167,7 @@ export default function Battlefield({
       case "item":
         return "You have no items.";
       case "chg":
-        return "No one to change, you're alone mate.";
+        return "Choose a mon.";
       case "run":
         return "Can't ghost this time!";
       default:
@@ -223,6 +255,16 @@ export default function Battlefield({
           advance();
       }}
     >
+      <div className="flex justify-between text-sm mb-2">
+        <span>
+          Enemy mons: {enemyTeam.filter((m) => m.hp > 0).length}/
+          {enemyTeam.length}
+        </span>
+        <span>
+          Your mons: {playerTeam.filter((m) => m.hp > 0).length}/
+          {playerTeam.length}
+        </span>
+      </div>
       <StatusRow
         side="enemy"
         show={phase !== "start"}
@@ -266,7 +308,19 @@ export default function Battlefield({
               !canInteract ? "opacity-50 pointer-events-none" : ""
             }`}
           >
-            <BattleMenu onSelect={(action) => setSelectedAction(action)} />
+            <BattleMenu
+              onSelect={(action) => {
+                setSelectedAction(action);
+                if (action === "chg") {
+                  const opts = playerTeam
+                    .map((m, i) => ({ ...m, index: i }))
+                    .filter((m) => m.hp > 0 && m.index !== playerIdx);
+                  if (opts.length > 0) {
+                    setShowSwitch(true);
+                  }
+                }
+              }}
+            />
           </div>
         </div>
 
@@ -293,6 +347,28 @@ export default function Battlefield({
                 setLastNonEmptyMsg(preMsg);
                 const events = engine.doMove(idx);
                 await playEvents(events);
+              }
+            }}
+          />
+        )}
+        {showSwitch && (
+          <SwitchOverlay
+            mons={playerTeam
+              .map((m, i) => ({
+                name: m.name,
+                hp: m.hp,
+                maxHp: (m as any).maxHp ?? m.hp,
+                index: i,
+              }))
+              .filter((m) => m.hp > 0 && m.index !== playerIdx)}
+            onCancel={() => setShowSwitch(false)}
+            onSelect={(mon) => {
+              setShowSwitch(false);
+              if (mon) {
+                setPlayerIdx(mon.index);
+                setOverrideMsg(`I trust in you ${mon.name}!`);
+                setPhase("playerTurn");
+                setSelectedAction(null);
               }
             }}
           />

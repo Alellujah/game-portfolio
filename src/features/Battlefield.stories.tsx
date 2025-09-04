@@ -14,9 +14,13 @@ type Story = StoryObj<typeof Battlefield>;
 
 export const Default: Story = {
   args: {
-    playerMon: { ...MONS["remotemon"], level: 50 },
-    enemyMon: { ...MONS["paycheckuchu"], level: 45 },
-    playerMons: [MONS["remotemon"]],
-    enemyMons: [MONS["remotemon"]],
+    playerMons: [
+      { ...MONS["remotemon"], level: 50 },
+      { ...MONS["paycheckuchu"], level: 48 },
+    ],
+    enemyMons: [
+      { ...MONS["paycheckuchu"], level: 45 },
+      { ...MONS["remotemon"], level: 46 },
+    ],
   },
 };
