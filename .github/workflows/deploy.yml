@@ -44,53 +44,38 @@ jobs:
       - name: Build
         run: pnpm run build
 
-      # Use Node 18 for image tooling due to known Node 20+/22 incompatibilities
-      - name: Switch to Node 18 for optimization
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
+      - name: Install image optimization tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y oxipng jpegoptim
 
-      - name: Optimize images (Squoosh)
+      - name: Optimize PNGs (oxipng)
         shell: bash
         run: |
           set -euo pipefail
-          pnpm dlx @squoosh/cli@latest -h || true
-
-          # Collect PNG files
           mapfile -t PNGS < <(find dist -type f -name '*.png') || true
           if [ ${#PNGS[@]} -gt 0 ]; then
             echo "Optimizing ${#PNGS[@]} PNG files with oxipng..."
-            pnpm dlx @squoosh/cli@latest -d dist --oxipng '{"level":2}' "${PNGS[@]}"
-            # If Squoosh wrote '*.oxipng.png', rename back to original names
-            while IFS= read -r -d '' f; do
-              base="${f%.oxipng.png}.png"
-              mv -f "$f" "$base"
-            done < <(find dist -type f -name '*.oxipng.png' -print0)
+            # -o2: level 2, --strip safe: strip metadata, keep color profiles if safe
+            printf '%s\0' "${PNGS[@]}" | xargs -0 -n1 -P 2 oxipng -o 2 --strip safe --quiet
           else
             echo "No PNG files found under dist/."
           fi
 
-          # Collect JPEG files
+      - name: Optimize JPEGs (jpegoptim)
+        shell: bash
+        run: |
+          set -euo pipefail
           mapfile -t JPGS < <(find dist -type f \( -name '*.jpg' -o -name '*.jpeg' \)) || true
           if [ ${#JPGS[@]} -gt 0 ]; then
-            echo "Optimizing ${#JPGS[@]} JPEG files with mozjpeg..."
-            pnpm dlx @squoosh/cli@latest -d dist --mozjpeg '{"quality":75}' "${JPGS[@]}"
-            # Rename '*.mozjpeg.jpg' and '*.mozjpeg.jpeg' back to originals if created
-            while IFS= read -r -d '' f; do
-              base="${f%.mozjpeg.jpg}.jpg"
-              mv -f "$f" "$base"
-            done < <(find dist -type f -name '*.mozjpeg.jpg' -print0)
-            while IFS= read -r -d '' f; do
-              base="${f%.mozjpeg.jpeg}.jpeg"
-              mv -f "$f" "$base"
-            done < <(find dist -type f -name '*.mozjpeg.jpeg' -print0)
+            echo "Optimizing ${#JPGS[@]} JPEG files with jpegoptim..."
+            jpegoptim --max=75 --strip-all --all-progressive --quiet "${JPGS[@]}"
           else
             echo "No JPEG files found under dist/."
           fi
 
       - name: Optimize SVGs (SVGO)
-        run: |
-          pnpm dlx svgo@latest -r -f dist || true
+        run: pnpm dlx svgo@latest -r -f dist || true
 
       - name: List build output (debug)
         run: |
