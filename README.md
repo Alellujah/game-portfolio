@@ -1,69 +1,47 @@
-# React + TypeScript + Vite
+## Game Portfolio (Pokemon‑style Battle Demo)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is a small browser game I built for fun, with a helping hand from AI. It recreates a retro, turn‑based battle flow and showcases a few tongue‑in‑cheek “IT‑themed” creatures. The project is a playground for UI/animation ideas and a place to try out interactions fast.
 
-Currently, two official plugins are available:
+I’m open to new freelance projects. If you want to collaborate, say hi at:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- fabioalbuquerque.com
+- fabioalbuquerque.pt
 
-## Expanding the ESLint configuration
+### Tech
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- React + TypeScript + Vite
+- Tailwind CSS (v4) for styling
+- Storybook for component previews
 
-```js
-export default tseslint.config([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
+### Scripts
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+- pnpm dev — run the app locally
+- pnpm build — build for production
+- pnpm preview — preview the build
+- pnpm storybook — run Storybook
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
+### Node / pnpm
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Vite 7 requires Node 20.19+ or 22.12+. Recommended:
 
-```js
-// eslint.config.js
-import reactX from "eslint-plugin-react-x";
-import reactDom from "eslint-plugin-react-dom";
+- Node: 22.x (LTS)
+- pnpm: 8.x or 9.x
 
-export default tseslint.config([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs["recommended-typescript"],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
+If you see a crypto.hash error, upgrade Node to a supported version and reinstall deps (rm -rf node_modules pnpm-lock.yaml && pnpm install).
+
+### Deploy (GitHub Pages)
+
+This repo is configured to deploy to GitHub Pages using Actions.
+
+1. Set the base path in vite.config.ts (already set to /game-portfolio/).
+2. Push to main. The workflow at .github/workflows/deploy.yml builds and publishes dist/.
+3. Enable Pages in the repo settings (Source: GitHub Actions).
+
+Your site will be available at https://<your-user>.github.io/game-portfolio/.
+
+### Notes
+
+- Art and UI are evolving; pieces may be intentionally stylized or WIP.
+- Ideas, feedback or hire requests are very welcome.
+
+— Fábio Albuquerque
