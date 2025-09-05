@@ -20,3 +20,28 @@ export const Default: Story = {
     enemyMons: [MONS["remotemon"], MONS["remotemon"], MONS["remotemon"]],
   },
 };
+
+export const WithEmptySlots: Story = {
+  args: {
+    playerSpriteUrl: "public/players/back-recruiter-green.png",
+    enemySpriteUrl: "public/players/nerd_it_guy-green.png",
+    playerMons: [MONS["remotemon"], MONS["paycheckuchu"]],
+    enemyMons: [MONS["testzilla"]],
+  },
+};
+
+export const WithFaintedAndEmpty: Story = {
+  args: {
+    playerSpriteUrl: "public/players/back-recruiter-green.png",
+    enemySpriteUrl: "public/players/nerd_it_guy-green.png",
+    playerMons: [
+      { ...MONS["remotemon"], hp: 0 },
+      MONS["levelupzord"],
+      { ...MONS["leetcodebat"], hp: 0 },
+    ],
+    enemyMons: [
+      MONS["ghostcruiter"],
+      { ...MONS["testzilla"], hp: 0 },
+    ],
+  },
+};

@@ -11,16 +11,9 @@ import FightOverlay from "./battle/FightOverlay";
 interface Props {
   playerMon: Mon;
   enemyMon: Mon;
-  playerMons: Mon[];
-  enemyMons: Mon[];
 }
 
-export default function Battlefield({
-  enemyMon,
-  enemyMons,
-  playerMon,
-  playerMons,
-}: Props) {
+export default function Battlefield({ enemyMon, playerMon }: Props) {
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
 
   // Bridge mons to engine shape (fallback stats if missing)

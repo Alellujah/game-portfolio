@@ -1,5 +1,6 @@
 import Sprite from "../../components/Sprite";
 import StatusBar from "../../components/StatusBar";
+import type { ReactNode } from "react";
 
 export type StatusRowProps = {
   side: "enemy" | "player";
@@ -8,6 +9,7 @@ export type StatusRowProps = {
   spriteUrl: string;
   status: { name: string; level: number; hp: number; actualHp: number };
   spriteSize?: number; // optional, defaults to 132
+  extra?: ReactNode; // optional node rendered next to the sprite (e.g., MonsPreview)
 };
 
 function StatusRow({
@@ -17,6 +19,7 @@ function StatusRow({
   spriteUrl,
   status,
   spriteSize = 132,
+  extra,
 }: StatusRowProps) {
   const isEnemy = side === "enemy";
 
@@ -42,21 +45,23 @@ function StatusRow({
             />
           </div>
           <div
-            className={`col-span-2 flex justify-center transition-all duration-500 ${
+            className={`col-span-2 flex justify-center items-center gap-2 transition-all duration-500 ${
               show ? "opacity-100 scale-100" : "opacity-0 scale-95"
             } ${hit ? "animate-hit" : ""}`}
           >
             <Sprite spriteUrl={spriteUrl} size={spriteSize} />
+            {extra}
           </div>
         </>
       ) : (
         <>
           {/* Player sprite on the left, status on the right */}
           <div
-            className={`col-span-2 justify-center flex transition-all duration-500 ${
+            className={`col-span-2 justify-center flex items-center gap-2 transition-all duration-500 ${
               show ? "opacity-100 translate-x-0" : "opacity-0 translate-x-6"
             } ${hit ? "animate-hit" : ""}`}
           >
+            {extra}
             <Sprite spriteUrl={spriteUrl} size={spriteSize} />
           </div>
           <div
