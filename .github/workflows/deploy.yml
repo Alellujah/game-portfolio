@@ -41,7 +41,8 @@ jobs:
 
       - name: List build output (debug)
         run: |
-          echo "Built files:" && ls -lah dist || true
+          echo "Built files (top):" && ls -lah dist || true
+          echo "Built files (depth 2):" && find dist -maxdepth 2 -type f -print | sort || true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
