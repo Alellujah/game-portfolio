@@ -31,11 +31,13 @@ export default function BattleScene({
       )}
 
       {scene === "field" && (
-        <Battlefield
-          playerMon={playerMons[0]}
-          enemyMon={enemyMons[0]}
-          playerParty={playerMons}
-        />
+        <div className="scene-fade-in">
+          <Battlefield
+            playerMon={playerMons[0]}
+            enemyMon={enemyMons[0]}
+            playerParty={playerMons}
+          />
+        </div>
       )}
 
       {scene === "end" && <></>}

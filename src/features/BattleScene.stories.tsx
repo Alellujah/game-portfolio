@@ -24,8 +24,8 @@ const playerMons = [
 ];
 export const Default: Story = {
   args: {
-    playerSpriteUrl: "public/players/recruiter-back.png",
-    enemySpriteUrl: "public/players/developer-front.png",
+    playerSpriteUrl: "/players/recruiter-back.png",
+    enemySpriteUrl: "/players/developer-front.png",
     playerMons: playerMons,
     enemyMons: enemyMons,
   },

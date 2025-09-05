@@ -35,8 +35,8 @@ const MONS: Record<string, Mon> = {
       { name: "Bye‑Bye Micromanagement", type: "PSYCHIC", pp: 5, maxPP: 5, power: 70 },
       { name: "Work–Life Balance", type: "STEEL", pp: 20, maxPP: 20, power: 0 },
     ],
-    spriteFrontUrl: "public/mons/remotemon-gemini-front.png",
-    spriteBackUrl: "public/mons/remotemon-gemini-back.png",
+    spriteFrontUrl: "/mons/remotemon-gemini-front.png",
+    spriteBackUrl: "/mons/remotemon-gemini-back.png",
   },
   paycheckuchu: {
     id: 2,
@@ -53,8 +53,8 @@ const MONS: Record<string, Mon> = {
       { name: "Bonus Bolt", type: "ELECTRIC", pp: 5, maxPP: 5, power: 70 },
       { name: "Payday Parade", type: "NORMAL", pp: 20, maxPP: 20, power: 0 },
     ],
-    spriteFrontUrl: "public/mons/paycheckuchu-gemini-front.png",
-    spriteBackUrl: "public/mons/paycheckuchu-gemini-back.png",
+    spriteFrontUrl: "/mons/paycheckuchu-gemini-front.png",
+    spriteBackUrl: "/mons/paycheckuchu-gemini-back.png",
   },
   levelupzord: {
     id: 3,
@@ -71,8 +71,8 @@ const MONS: Record<string, Mon> = {
       { name: "Refactor Roar", type: "NORMAL", pp: 5, maxPP: 5, power: 70 },
       { name: "Mentor Shield", type: "STEEL", pp: 20, maxPP: 20, power: 0 },
     ],
-    spriteFrontUrl: "public/mons/levelupzord-gemini-front.png",
-    spriteBackUrl: "public/mons/levelupzord-gemini-back.png",
+    spriteFrontUrl: "/mons/levelupzord-gemini-front.png",
+    spriteBackUrl: "/mons/levelupzord-gemini-back.png",
   },
   testzilla: {
     id: 4,
@@ -89,8 +89,8 @@ const MONS: Record<string, Mon> = {
       { name: "Regression Rampage", type: "NORMAL", pp: 5, maxPP: 5, power: 75 },
       { name: "Merge Conflict", type: "STEEL", pp: 20, maxPP: 20, power: 0 },
     ],
-    spriteFrontUrl: "public/mons/testzilla-gemini-front.png",
-    spriteBackUrl: "public/mons/testzilla-gemini-back.png",
+    spriteFrontUrl: "/mons/testzilla-gemini-front.png",
+    spriteBackUrl: "/mons/testzilla-gemini-back.png",
   },
   leetcodebat: {
     id: 5,
@@ -107,8 +107,8 @@ const MONS: Record<string, Mon> = {
       { name: "DP Dive", type: "PSYCHIC", pp: 5, maxPP: 5, power: 70 },
       { name: "Greedy Gust", type: "NORMAL", pp: 20, maxPP: 20, power: 0 },
     ],
-    spriteFrontUrl: "public/mons/leetcodebat-gemini-front.png",
-    spriteBackUrl: "public/mons/leetcodebat-gemini-back.png",
+    spriteFrontUrl: "/mons/leetcodebat-gemini-front.png",
+    spriteBackUrl: "/mons/leetcodebat-gemini-back.png",
   },
   ghostcruiter: {
     id: 6,
@@ -125,8 +125,8 @@ const MONS: Record<string, Mon> = {
       { name: "Vanishing Offer", type: "GHOST", pp: 5, maxPP: 5, power: 75 },
       { name: "Cold Outreach", type: "GHOST", pp: 20, maxPP: 20, power: 0 },
     ],
-    spriteFrontUrl: "public/mons/ghostcruiter-gemini-front.png",
-    spriteBackUrl: "public/mons/ghostcruiter-gemini-back.png",
+    spriteFrontUrl: "/mons/ghostcruiter-gemini-front.png",
+    spriteBackUrl: "/mons/ghostcruiter-gemini-back.png",
   },
 };
 

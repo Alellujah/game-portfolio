@@ -14,8 +14,8 @@ type Story = StoryObj<typeof BattleIntro>;
 
 export const Default: Story = {
   args: {
-    playerSpriteUrl: "public/players/developer-back.png",
-    enemySpriteUrl: "public/players/recruiter-front.png",
+    playerSpriteUrl: "/players/developer-back.png",
+    enemySpriteUrl: "/players/recruiter-front.png",
     playerMons: [MONS["remotemon"], MONS["remotemon"], MONS["remotemon"]],
     enemyMons: [MONS["remotemon"], MONS["remotemon"], MONS["remotemon"]],
   },
@@ -23,8 +23,8 @@ export const Default: Story = {
 
 export const WithEmptySlots: Story = {
   args: {
-    playerSpriteUrl: "public/players/back-recruiter-green.png",
-    enemySpriteUrl: "public/players/nerd_it_guy-green.png",
+    playerSpriteUrl: "/players/back-recruiter-green.png",
+    enemySpriteUrl: "/players/nerd_it_guy-green.png",
     playerMons: [MONS["remotemon"], MONS["paycheckuchu"]],
     enemyMons: [MONS["testzilla"]],
   },
@@ -32,8 +32,8 @@ export const WithEmptySlots: Story = {
 
 export const WithFaintedAndEmpty: Story = {
   args: {
-    playerSpriteUrl: "public/players/back-recruiter-green.png",
-    enemySpriteUrl: "public/players/nerd_it_guy-green.png",
+    playerSpriteUrl: "/players/back-recruiter-green.png",
+    enemySpriteUrl: "/players/nerd_it_guy-green.png",
     playerMons: [
       { ...MONS["remotemon"], hp: 0 },
       MONS["levelupzord"],

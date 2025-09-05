@@ -27,9 +27,10 @@ function BattleIntro({
   const [exiting, setExiting] = useState(false);
 
   const fallbackMessages = [
-    "A wild DEVELOPER appeared!",
-    "DEVELOPER: So you think you can recruit me?",
+    "FABIO wants to battle!",
+    "FABIO: So you think you can recruit me?",
     "You win, we can talk",
+    "...just a detail, I built this game, eheheh",
   ];
   const msgs = messages && messages.length > 0 ? messages : fallbackMessages;
   const [msgIndex, setMsgIndex] = useState(0);

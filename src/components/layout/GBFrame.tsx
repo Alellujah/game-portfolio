@@ -1,7 +1,7 @@
 function GBFrame() {
   return (
     <>
-      <img src="/public/gbframe.svg" alt="Gameboy" />
+      <img src="/gbframe.svg" alt="Gameboy" />
     </>
   );
 }
