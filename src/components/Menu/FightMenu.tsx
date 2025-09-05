@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import Container from "../Container";
+import Container from "../layout/Container";
 
 export interface Skill {
   name: string;

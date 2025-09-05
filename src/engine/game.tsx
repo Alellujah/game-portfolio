@@ -125,7 +125,7 @@ export function performTurn(
       enemy.hp = Math.max(0, enemy.hp - dmg);
       events.push({
         type: "message",
-        payload: `${player.name} used ${move.name}!`,
+        payload: `Player ${player.name.toUpperCase()} used ${move.name.toUpperCase()}!`,
       });
       events.push({
         type: "hp",
@@ -159,7 +159,7 @@ export function performTurn(
         player.hp = Math.max(0, player.hp - dmg);
         events.push({
           type: "message",
-          payload: `${enemy.name} used ${move.name}!`,
+          payload: `Enemy ${enemy.name.toUpperCase()} used ${move.name.toUpperCase()}!`,
         });
         events.push({
           type: "hp",

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import Container from "../Container";
+import Container from "../layout/Container";
 
 type BattleMenuProps = {
   disabled?: boolean;

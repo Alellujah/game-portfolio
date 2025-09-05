@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import BattleMessages from "../components/BattleMessages";
 import Sprite from "../components/Sprite";
+import type { Mon } from "../engine/mons";
+import MonsPreview from "./battle/MonsPreview";
 
 interface Props {
   playerSpriteUrl: string;
   enemySpriteUrl: string;
   onFinish: () => void;
   messages?: string[]; // optional sequence of messages shown after animations
+  playerMons: Mon[];
+  enemyMons: Mon[];
 }
 
 function BattleIntro({
@@ -14,6 +18,8 @@ function BattleIntro({
   enemySpriteUrl,
   onFinish,
   messages,
+  playerMons,
+  enemyMons,
 }: Props) {
   const [enemyIn, setEnemyIn] = useState(false);
   const [playerIn, setPlayerIn] = useState(false);
@@ -84,6 +90,7 @@ function BattleIntro({
           }`}
         >
           <Sprite spriteUrl={enemySpriteUrl} size={132} />
+          <MonsPreview mons={enemyMons} />
         </div>
       </div>
 
@@ -98,6 +105,7 @@ function BattleIntro({
               : "opacity-0 -translate-x-6"
           }`}
         >
+          <MonsPreview mons={playerMons} />
           <Sprite spriteUrl={playerSpriteUrl} size={132} />
         </div>
       </div>

@@ -288,7 +288,9 @@ export default function Battlefield({
                 lockUIRef.current = true; // Enter guard for same-tick keydown
                 setLockUI(true); // pre-lock to avoid Enter race
                 setSelectedAction(null);
-                const preMsg = `${playerMon.name} used ${skill?.name}!`;
+                const preMsg = `${
+                  phase === "playerTurn" ? "Player " : "Enemy "
+                }${playerMon.name} used ${skill?.name}!`;
                 setOverrideMsg(preMsg);
                 setLastNonEmptyMsg(preMsg);
                 const events = engine.doMove(idx);

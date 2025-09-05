@@ -1,4 +1,4 @@
-import Container from "./Container";
+import Container from "./layout/Container";
 
 type StatusBarProps = {
   hp: number; // 0 to 100
