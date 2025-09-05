@@ -44,39 +44,6 @@ jobs:
       - name: Build
         run: pnpm run build
 
-      - name: Install image optimization tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y oxipng jpegoptim
-
-      - name: Optimize PNGs (oxipng)
-        shell: bash
-        run: |
-          set -euo pipefail
-          mapfile -t PNGS < <(find dist -type f -name '*.png') || true
-          if [ ${#PNGS[@]} -gt 0 ]; then
-            echo "Optimizing ${#PNGS[@]} PNG files with oxipng..."
-            # -o2: level 2, --strip safe: strip metadata, keep color profiles if safe
-            printf '%s\0' "${PNGS[@]}" | xargs -0 -n1 -P 2 oxipng -o 2 --strip safe --quiet
-          else
-            echo "No PNG files found under dist/."
-          fi
-
-      - name: Optimize JPEGs (jpegoptim)
-        shell: bash
-        run: |
-          set -euo pipefail
-          mapfile -t JPGS < <(find dist -type f \( -name '*.jpg' -o -name '*.jpeg' \)) || true
-          if [ ${#JPGS[@]} -gt 0 ]; then
-            echo "Optimizing ${#JPGS[@]} JPEG files with jpegoptim..."
-            jpegoptim --max=75 --strip-all --all-progressive --quiet "${JPGS[@]}"
-          else
-            echo "No JPEG files found under dist/."
-          fi
-
-      - name: Optimize SVGs (SVGO)
-        run: pnpm dlx svgo@latest -r -f dist || true
-
       - name: List build output (debug)
         run: |
           echo "Built files (top):" && ls -lah dist || true
