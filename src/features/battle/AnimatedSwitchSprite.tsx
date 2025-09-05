@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Sprite from "../../components/Sprite";
 
 type Props = {
@@ -20,30 +20,20 @@ export default function AnimatedSwitchSprite({
   className = "",
 }: Props) {
   const [current, setCurrent] = useState<string | undefined>(spriteUrl);
-  const [prev, setPrev] = useState<string | undefined>(undefined);
-  const animatingRef = useRef(false);
+  const [blink, setBlink] = useState(false);
 
   useEffect(() => {
     if (spriteUrl === current) return;
-    // Start exit animation for previous sprite
-    setPrev(current);
-    animatingRef.current = true;
+    // Briefly hide, then show new sprite with a simple slide-in
+    setBlink(true);
     const t = setTimeout(() => {
       setCurrent(spriteUrl);
-      // allow exit to finish before clearing prev
-      const t2 = setTimeout(() => {
-        setPrev(undefined);
-        animatingRef.current = false;
-      }, 200);
-      return () => clearTimeout(t2);
-    }, 200);
+      setBlink(false);
+    }, 120);
     return () => clearTimeout(t);
   }, [spriteUrl, current]);
 
-  const exitClass =
-    side === "player" ? "switch-exit-left" : "switch-exit-right";
-  const enterClass =
-    side === "player" ? "switch-enter-left" : "switch-enter-right";
+  const enterClass = side === "player" ? "simple-enter-left" : "simple-enter-right";
 
   const wrapperStyle = size != null ? { width: size, height: size } : undefined;
   const wrapperClass = size == null ? "relative w-full h-full" : "relative";
@@ -52,36 +42,11 @@ export default function AnimatedSwitchSprite({
     <div className={`${wrapperClass} ${className}`} style={wrapperStyle}>
       {/* Invisible baseline to preserve layout height/width */}
       <div className="invisible">
-        <Sprite spriteUrl={current || prev} size={size} />
+        <Sprite spriteUrl={current} size={size} />
       </div>
-      {prev && (
-        <div className={`absolute inset-0 ${exitClass}`}>
-          <Sprite spriteUrl={prev} size={size} />
-          <div
-            className={`switch-dust ${
-              side === "player" ? "from-left" : "from-right"
-            }`}
-          >
-            <span />
-            <span />
-            <span />
-          </div>
-        </div>
-      )}
-      {current && (
-        <div className={`absolute inset-0 ${prev ? enterClass : ""}`}>
+      {!blink && current && (
+        <div className={`absolute inset-0 ${enterClass}`}>
           <Sprite spriteUrl={current} size={size} />
-          {prev && (
-            <div
-              className={`switch-dust ${
-                side === "player" ? "from-left" : "from-right"
-              }`}
-            >
-              <span />
-              <span />
-              <span />
-            </div>
-          )}
         </div>
       )}
     </div>

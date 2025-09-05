@@ -56,7 +56,7 @@ export interface Move {
 }
 
 export interface BattleState {
-  player: { active: Mon; party: Mon[] };
+  player: { active: Mon; party: Mon[]; pendingSwitchIndex?: number };
   enemy: { active: Mon };
   turn: "player" | "enemy";
   ended?: "won" | "lost";
@@ -65,15 +65,16 @@ export interface BattleState {
 }
 
 export interface Event {
-  type: "message" | "hp" | "end" | "pause";
+  type: "message" | "hp" | "end" | "pause" | "forceChange";
   payload: any;
 }
 
 export interface TurnAction {
   kind: "move" | "flee" | "item" | "change";
-  index?: number; // for move
+  index?: number; // for move or change (party index)
   itemKey?: ItemKey; // for item
-  newMon?: Mon; // for change
+  newMon?: Mon; // for change (legacy)
+  skipEnemy?: boolean; // if true on change, do not schedule enemy reply
 }
 
 export type RNG = () => number;
@@ -213,27 +214,43 @@ export function performTurn(
       const idx = Math.max(0, Math.min(action.index, state.player.party.length - 1));
       const candidate = state.player.party[idx];
       if (candidate && candidate.name !== prev && candidate.hp > 0) {
-        state.player.active = candidate;
-        const next = state.player.active.name;
-        events.push({ type: "message", payload: `Come back, ${prev.toUpperCase()}!` });
-        events.push({ type: "message", payload: `Go, ${next.toUpperCase()}!` });
-        // pause after switching to allow UI to update before enemy action
-        events.push({ type: "pause", payload: "continue" });
-        state.turn = "enemy";
+        if (action.skipEnemy) {
+          // Immediate switch used after faint — no enemy reply
+          state.player.active = candidate;
+          events.push({ type: "message", payload: `Go, ${candidate.name.toUpperCase()}!` });
+          events.push({ type: "hp", payload: { target: "player", value: state.player.active.hp, reason: "switch" } });
+          state.turn = "player";
+          state.log.push(
+            ...events.map((e) => (e.type === "message" || e.type === "end" ? e.payload : ""))
+          );
+          return events;
+        } else {
+          // Defer the actual switch until UI acknowledges pause
+          state.player.pendingSwitchIndex = idx;
+          events.push({ type: "message", payload: `Come back, ${prev.toUpperCase()}!` });
+          // Auto-advance this pause after a short timeout; no user confirm needed here
+          events.push({ type: "pause", payload: "auto" });
+          state.turn = "enemy";
+          state.log.push(
+            ...events.map((e) => (e.type === "message" || e.type === "end" ? e.payload : ""))
+          );
+          return events;
+        }
+      } else {
+        // Invalid switch: do not consume the player's turn
+        events.push({ type: "message", payload: `Can't switch to that mon right now.` });
+        state.turn = "player";
         state.log.push(
           ...events.map((e) => (e.type === "message" || e.type === "end" ? e.payload : ""))
         );
         return events;
-      } else {
-        events.push({ type: "message", payload: `Can't switch to that mon right now.` });
       }
     } else if (action.newMon) {
-      // legacy direct mon switch (no party binding)
-      state.player.active = action.newMon;
-      const next = state.player.active.name;
+      // legacy direct mon switch (no party binding) — still defer
+      const idx = state.player.party.findIndex((m) => m.name === action.newMon?.name);
+      if (idx >= 0) state.player.pendingSwitchIndex = idx;
       events.push({ type: "message", payload: `Come back, ${prev.toUpperCase()}!` });
-      events.push({ type: "message", payload: `Go, ${next.toUpperCase()}!` });
-      events.push({ type: "pause", payload: "continue" });
+      events.push({ type: "pause", payload: "auto" });
       state.turn = "enemy";
       state.log.push(
         ...events.map((e) => (e.type === "message" || e.type === "end" ? e.payload : ""))
@@ -337,6 +354,21 @@ export function performTurn(
 export function enemyStep(state: BattleState, rng: RNG = defaultRng): Event[] {
   const events: Event[] = [];
   if (state.ended) return events;
+  // If there is a pending switch from the player, apply it now and announce
+  if (state.player.pendingSwitchIndex != null) {
+    const idx = state.player.pendingSwitchIndex;
+    state.player.pendingSwitchIndex = undefined;
+    const candidate = state.player.party[idx];
+    if (candidate) {
+      state.player.active = candidate;
+      events.push({ type: "message", payload: `Go, ${candidate.name.toUpperCase()}!` });
+      // Sync UI HP to new active before any damage animation
+      events.push({ type: "hp", payload: { target: "player", value: state.player.active.hp, reason: "switch" } });
+      // Pause here so user confirms after seeing GO message; enemy acts on next step
+      events.push({ type: "pause", payload: "continue" });
+      return events;
+    }
+  }
   const player = state.player.active;
   const enemy = state.enemy.active;
   const enemyAction = enemyAI(state);
@@ -364,11 +396,16 @@ export function enemyStep(state: BattleState, rng: RNG = defaultRng): Event[] {
       });
       events.push({ type: "hp", payload: { target: "player", value: player.hp } });
       if (player.hp <= 0) {
-        state.ended = "lost";
-        events.push({
-          type: "end",
-          payload: `Player ${player.name.toUpperCase()} fainted! You lose!`,
-        });
+        // If there is another mon available, force a switch instead of ending
+        const hasAnother = state.player.party.some((m) => m.hp > 0 && m.name !== player.name);
+        if (hasAnother) {
+          events.push({ type: "message", payload: `Player ${player.name.toUpperCase()} fainted!` });
+          events.push({ type: "forceChange", payload: true });
+          state.turn = "player";
+        } else {
+          state.ended = "lost";
+          events.push({ type: "end", payload: `Player ${player.name.toUpperCase()} fainted! You lose!` });
+        }
       }
     } else {
       events.push({

@@ -10,6 +10,7 @@ export type StatusRowProps = {
   status: { name: string; level: number; hp: number; actualHp: number };
   spriteSize?: number; // optional, defaults to 132
   extra?: ReactNode; // optional node rendered next to the sprite (e.g., MonsPreview)
+  animateHp?: boolean;
 };
 
 function StatusRow({
@@ -20,6 +21,7 @@ function StatusRow({
   status,
   spriteSize,
   extra,
+  animateHp = true,
 }: StatusRowProps) {
   const isEnemy = side === "enemy";
 
@@ -38,6 +40,7 @@ function StatusRow({
               actualHp={status.actualHp}
               level={status.level}
               name={status.name}
+              animate={animateHp}
             />
           </div>
           <div
@@ -78,6 +81,7 @@ function StatusRow({
               actualHp={status.actualHp}
               level={status.level}
               name={status.name}
+              animate={animateHp}
             />
           </div>
         </>

@@ -5,13 +5,11 @@ type StatusBarProps = {
   level: number;
   name: string;
   actualHp: number;
+  animate?: boolean;
 };
 
-function StatusBar({ hp, level, name, actualHp }: StatusBarProps) {
+function StatusBar({ hp, level, name, actualHp, animate = true }: StatusBarProps) {
   const hpPercent = Math.max(0, Math.min(100, (actualHp / hp) * 100));
-  let barColor = "bg-green-600";
-  if (hpPercent <= 25) barColor = "bg-red-600";
-  else if (hpPercent <= 50) barColor = "bg-yellow-400";
 
   return (
     <Container className="w-full p-2 mb-4">
@@ -25,7 +23,9 @@ function StatusBar({ hp, level, name, actualHp }: StatusBarProps) {
         <div className="text-black text-sm font-bold mr-2">HP:</div>
         <div className="flex-1 h-3 bg-white border border-black rounded overflow-hidden relative">
           <div
-            className={`absolute left-0 top-0 h-full ${barColor} transition-all duration-300`}
+            className={`absolute left-0 top-0 h-full bg-black ${
+              animate ? "transition-all duration-300" : "transition-none"
+            }`}
             style={{ width: `${hpPercent}%` }}
           />
         </div>

@@ -22,6 +22,7 @@ export default function Battlefield({
   playerParty,
 }: Props) {
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
+  const [playerSwitchingOut, setPlayerSwitchingOut] = useState(false);
 
   // Bridge mons to engine shape (fallback stats if missing)
   const toEngineMon = (m: Mon) => ({
@@ -68,10 +69,16 @@ export default function Battlefield({
 
   useEffect(() => {
     playerHp.reset(engPlayer.hp);
+    setHpInstant(true);
+    const t = setTimeout(() => setHpInstant(false), 200);
+    return () => clearTimeout(t);
   }, [engPlayer.name]);
 
   const [enemyHit, setEnemyHit] = useState(false);
   const [playerHit, setPlayerHit] = useState(false);
+  const [waiting, setWaiting] = useState(false);
+  const [forceChange, setForceChange] = useState(false);
+  const [hpInstant, setHpInstant] = useState(false);
 
   // Play a batch of engine events with timing + small sprite feedback
   async function playEvents(evts: any[]) {
@@ -79,6 +86,9 @@ export default function Battlefield({
     setLockUI(true);
     for (const e of evts) {
       if (e.type === "message") {
+        if (typeof e.payload === "string" && e.payload.startsWith("Come back,")) {
+          setPlayerSwitchingOut(true);
+        }
         setOverrideMsg(e.payload);
         await wait(Math.round(1000 * SPEED_MULT));
         continue;
@@ -90,6 +100,13 @@ export default function Battlefield({
           await wait(durE + Math.round(120 * SPEED_MULT));
           setEnemyHit(false);
         } else if (e.payload.target === "player") {
+          if ((e as any).payload?.reason === "switch") {
+            playerHp.reset((e as any).payload.value as number);
+            // Disable HP bar transition for this frame so it snaps without animating
+            setHpInstant(true);
+            setTimeout(() => setHpInstant(false), 200);
+            continue;
+          }
           // switch to enemy turn visuals while player takes damage
           setPhase("enemyTurn");
           setPlayerHit(true);
@@ -102,27 +119,41 @@ export default function Battlefield({
       if (e.type === "pause") {
         // Let the player press Enter/click to continue to enemy's action
         setLockUI(true); // keep UI locked to avoid menu interaction
-        // wait for key/click
-        await new Promise<void>((resolve) => {
-          const onKey = (ev: KeyboardEvent) => {
-            if (ev.key === "Enter" || ev.key === " ") {
+        const auto = (e as any).payload === "auto";
+        if (auto) {
+          await wait(600);
+        } else {
+          setWaiting(true);
+          // wait for key/click
+          await new Promise<void>((resolve) => {
+            const onKey = (ev: KeyboardEvent) => {
+              if (ev.key === "Enter" || ev.key === " ") {
+                window.removeEventListener("keydown", onKey);
+                window.removeEventListener("click", onClick);
+                resolve();
+              }
+            };
+            const onClick = () => {
               window.removeEventListener("keydown", onKey);
               window.removeEventListener("click", onClick);
               resolve();
-            }
-          };
-          const onClick = () => {
-            window.removeEventListener("keydown", onKey);
-            window.removeEventListener("click", onClick);
-            resolve();
-          };
-          window.addEventListener("keydown", onKey);
-          window.addEventListener("click", onClick);
-        });
-        // After acknowledgement, run enemy's step
+            };
+            window.addEventListener("keydown", onKey);
+            window.addEventListener("click", onClick);
+          });
+          setWaiting(false);
+        }
+        // After acknowledgement/timeout, run enemy's step
+        setPlayerSwitchingOut(false);
         const followUp = engine.enemyStep();
         await playEvents(followUp);
         return; // upstream call will unlock UI
+      }
+      if (e.type === "forceChange") {
+        // Open change overlay immediately; do not continue processing this batch
+        setForceChange(true);
+        setLockUI(false); // allow interacting with overlay
+        return;
       }
       if (e.type === "end") {
         setOverrideMsg(e.payload);
@@ -148,9 +179,9 @@ export default function Battlefield({
     | "enemyTurn"
     | "won"
     | "lost";
-  const [phase, setPhase] = useState<Phase>("start");
+  const [phase, setPhase] = useState<Phase>("enemySend");
   const [overrideMsg, setOverrideMsg] = useState<string | null>(
-    "Fábio wants to fight!"
+    `Fábio sends ${enemyMon.name}!`
   );
 
   // keep last non-empty message to avoid blanks during transitions
@@ -287,6 +318,7 @@ export default function Battlefield({
           hp: engPlayer.maxHp,
           actualHp: playerHp.disp,
         }}
+        animateHp={!hpInstant}
       />
       <div className="relative">
         <div className="grid grid-cols-3 gap-4 items-stretch">
@@ -296,6 +328,7 @@ export default function Battlefield({
               lastNonEmptyMsg={lastNonEmptyMsg}
               lockUI={lockUI}
               fallback={messages(selectedAction ?? "")}
+              waiting={waiting}
             />
           </div>
           <div
@@ -360,7 +393,7 @@ export default function Battlefield({
           />
         )}
 
-        {selectedAction === "chg" && canInteract && (
+        {(selectedAction === "chg" && canInteract) && (
           <ChangeOverlay
             party={engine.state.player.party}
             activeName={engPlayer.name}
@@ -374,6 +407,21 @@ export default function Battlefield({
               setLockUI(true);
               setSelectedAction(null);
               const events = engine.changeMonIndex(idx);
+              await playEvents(events);
+            }}
+          />
+        )}
+
+        {forceChange && (
+          <ChangeOverlay
+            party={engine.state.player.party}
+            activeName={engPlayer.name}
+            onCancel={() => { /* cannot cancel forced change */ }}
+            onSelect={async (idx) => {
+              if (idx == null) return;
+              setForceChange(false);
+              setLockUI(true);
+              const events = engine.changeMonIndexForced(idx);
               await playEvents(events);
             }}
           />

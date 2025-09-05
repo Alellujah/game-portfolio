@@ -5,6 +5,7 @@ type Props = {
   lastNonEmptyMsg: string;
   lockUI: boolean;
   fallback: string;
+  waiting?: boolean;
 };
 
 function MessagesPane({
@@ -12,6 +13,7 @@ function MessagesPane({
   lastNonEmptyMsg,
   lockUI,
   fallback,
+  waiting = false,
 }: Props) {
   const text =
     overrideMsg && overrideMsg.trim() !== ""
@@ -20,7 +22,7 @@ function MessagesPane({
       ? lastNonEmptyMsg
       : fallback;
 
-  return <BattleMessages message={text} className="h-full" />;
+  return <BattleMessages message={text} className="h-full" waiting={waiting} />;
 }
 
 export default MessagesPane;

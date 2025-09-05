@@ -5,9 +5,10 @@ type Props = {
   message: string;
   speed?: number; // ms per character
   className?: string;
+  waiting?: boolean; // show blinking dots when awaiting user input
 };
 
-function BattleMessages({ message, speed = 30, className = "" }: Props) {
+function BattleMessages({ message, speed = 30, className = "", waiting = false }: Props) {
   const [displayed, setDisplayed] = useState("");
 
   useEffect(() => {
@@ -31,7 +32,10 @@ function BattleMessages({ message, speed = 30, className = "" }: Props) {
 
   return (
     <Container fixedWidth className={className}>
-      <p className={`text-black text-xl leading-snug`}>{displayed}</p>
+      <p className={`text-black text-xl leading-snug`}> 
+        {displayed}
+        {waiting && <span className="blinking-dots">...</span>}
+      </p>
     </Container>
   );
 }

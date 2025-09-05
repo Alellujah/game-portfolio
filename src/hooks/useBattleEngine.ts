@@ -37,6 +37,8 @@ export type UseBattleEngine = {
   changeMon: (mon: Mon) => BattleEvent[];
   /** change by party index (preferred) */
   changeMonIndex: (index: number) => BattleEvent[];
+  /** forced change after faint (no enemy reply) */
+  changeMonIndexForced: (index: number) => BattleEvent[];
   /** attempt to flee (ends battle immediately) */
   flee: () => BattleEvent[];
   /** reset battle to initial mons */
@@ -127,6 +129,11 @@ export default function useBattleEngine(
     return apply(events);
   }, [apply, rng]);
 
+  const changeMonIndexForced = useCallback((index: number) => {
+    const events = performTurn(stateRef.current, { kind: "change", index, skipEnemy: true }, rng);
+    return apply(events);
+  }, [apply, rng]);
+
   const reset = useCallback(() => {
     stateRef.current = createBattle(
       structuredClone(opts.player),
@@ -155,6 +162,7 @@ export default function useBattleEngine(
     useItem,
     changeMon,
     changeMonIndex,
+    changeMonIndexForced,
     flee,
     reset,
     enemyStep,

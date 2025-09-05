@@ -27,9 +27,9 @@ function BattleIntro({
   const [exiting, setExiting] = useState(false);
 
   const fallbackMessages = [
-    "A wild developer appeared! (press Enter)",
-    "He looks ready to code!",
-    "And kick some ass!",
+    "A wild DEVELOPER appeared!",
+    "DEVELOPER: So you think you can recruit me?",
+    "You win, we can talk",
   ];
   const msgs = messages && messages.length > 0 ? messages : fallbackMessages;
   const [msgIndex, setMsgIndex] = useState(0);
@@ -131,6 +131,7 @@ function BattleIntro({
             <BattleMessages
               message={showMessage ? msgs[msgIndex] : ""}
               className="h-full w-full"
+              waiting={showMessage && !exiting}
             />
           </div>
         </div>

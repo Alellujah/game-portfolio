@@ -12,11 +12,21 @@ export default meta;
 
 type Story = StoryObj<typeof BattleScene>;
 
+const enemyMons = [
+  MONS["ghostcruiter"],
+  MONS["leetcodebat"],
+  MONS["testzilla"],
+];
+const playerMons = [
+  MONS["remotemon"],
+  MONS["paycheckuchu"],
+  MONS["levelupzord"],
+];
 export const Default: Story = {
   args: {
-    playerSpriteUrl: "public/players/developer-back.png",
-    enemySpriteUrl: "public/players/recruiter-front.png",
-    playerMons: [MONS["remotemon"], MONS["levelupzord"], MONS["leetcodebat"]],
-    enemyMons: [MONS["remotemon"]],
+    playerSpriteUrl: "public/players/recruiter-back.png",
+    enemySpriteUrl: "public/players/developer-front.png",
+    playerMons: playerMons,
+    enemyMons: enemyMons,
   },
 };
