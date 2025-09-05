@@ -1,7 +1,7 @@
 function GBFrame() {
   return (
     <>
-      <img src="/gbframe.svg" alt="Gameboy" />
+      <img src={import.meta.env.BASE_URL + "gbframe.svg"} alt="Gameboy" />
     </>
   );
 }
