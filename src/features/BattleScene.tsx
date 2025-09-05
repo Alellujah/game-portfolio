@@ -25,16 +25,13 @@ export default function BattleScene({
           playerSpriteUrl={playerSpriteUrl}
           enemySpriteUrl={enemySpriteUrl}
           onFinish={() => setScene("field")}
+          enemyMons={enemyMons}
+          playerMons={playerMons}
         />
       )}
 
       {scene === "field" && (
-        <Battlefield
-          playerMon={playerMons[0]}
-          enemyMon={enemyMons[0]}
-          playerMons={playerMons}
-          enemyMons={enemyMons}
-        />
+        <Battlefield playerMon={playerMons[0]} enemyMon={enemyMons[0]} />
       )}
 
       {scene === "end" && <></>}

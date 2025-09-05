@@ -33,8 +33,8 @@ const MONS: Record<string, Mon> = {
       { name: "Refactor Blast", type: "PSYCHIC", pp: 5, maxPP: 5, power: 70 },
       { name: "Deploy Shield", type: "STEEL", pp: 20, maxPP: 20, power: 0 },
     ],
-    spriteFrontUrl: "public/mons/remotemon-front.png",
-    spriteBackUrl: "public/mons/remotemon-back.png",
+    spriteFrontUrl: "public/mons/remotemon-gemini-front.png",
+    spriteBackUrl: "public/mons/remotemon-gemini-back.png",
   },
   paycheckuchu: {
     id: 2,
@@ -50,8 +50,8 @@ const MONS: Record<string, Mon> = {
       { name: "Tax Thunder", type: "ELECTRIC", pp: 5, maxPP: 5, power: 70 },
       { name: "Audit Guard", type: "NORMAL", pp: 20, maxPP: 20, power: 0 },
     ],
-    spriteFrontUrl: "public/mons/paycheckuchu-front.png",
-    spriteBackUrl: "public/mons/paycheckuchu-back.png",
+    spriteFrontUrl: "public/mons/paycheckuchu-gemini-front.png",
+    spriteBackUrl: "public/mons/paycheckuchu-gemini-back.png",
   },
   levelupzord: {
     id: 3,
@@ -67,8 +67,8 @@ const MONS: Record<string, Mon> = {
       { name: "Power-Up Roar", type: "NORMAL", pp: 5, maxPP: 5, power: 70 },
       { name: "Evolve Shield", type: "STEEL", pp: 20, maxPP: 20, power: 0 },
     ],
-    spriteFrontUrl: "public/mons/levelupzord-front.png",
-    spriteBackUrl: "public/mons/levelupzord-back.png",
+    spriteFrontUrl: "public/mons/levelupzord-gemini-front.png",
+    spriteBackUrl: "public/mons/levelupzord-gemini-back.png",
   },
   testzilla: {
     id: 4,
@@ -84,8 +84,8 @@ const MONS: Record<string, Mon> = {
       { name: "Debug Roar", type: "NORMAL", pp: 5, maxPP: 5, power: 70 },
       { name: "Code Shield", type: "STEEL", pp: 20, maxPP: 20, power: 0 },
     ],
-    spriteFrontUrl: "public/mons/testzilla-front.png",
-    spriteBackUrl: "public/mons/testzilla-back.png",
+    spriteFrontUrl: "public/mons/testzilla-gemini-front.png",
+    spriteBackUrl: "public/mons/testzilla-gemini-back.png",
   },
   leetcodebat: {
     id: 5,
@@ -101,8 +101,8 @@ const MONS: Record<string, Mon> = {
       { name: "Debug Scream", type: "NORMAL", pp: 5, maxPP: 5, power: 70 },
       { name: "Syntax Shield", type: "STEEL", pp: 20, maxPP: 20, power: 0 },
     ],
-    spriteFrontUrl: "public/mons/leetcodebat-front.png",
-    spriteBackUrl: "public/mons/leetcodebat-back.png",
+    spriteFrontUrl: "public/mons/leetcodebat-gemini-front.png",
+    spriteBackUrl: "public/mons/leetcodebat-gemini-back.png",
   },
   ghostcruiter: {
     id: 6,
@@ -124,8 +124,8 @@ const MONS: Record<string, Mon> = {
       { name: "Ethereal Call", type: "GHOST", pp: 5, maxPP: 5, power: 70 },
       { name: "Haunt Shield", type: "GHOST", pp: 20, maxPP: 20, power: 0 },
     ],
-    spriteFrontUrl: "public/mons/ghostcruiter-front.png",
-    spriteBackUrl: "public/mons/ghostcruiter-back.png",
+    spriteFrontUrl: "public/mons/ghostcruiter-gemini-front.png",
+    spriteBackUrl: "public/mons/ghostcruiter-gemini-back.png",
   },
 };
 

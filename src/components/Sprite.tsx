@@ -8,13 +8,13 @@ interface SpriteProps {
  * - `spriteUrl`: URL of the sprite image.
  * - `size`: Size of the sprite in pixels (default: 96).
  */
-function Sprite({ spriteUrl, size = 256 }: SpriteProps) {
+function Sprite({ spriteUrl, size }: SpriteProps) {
   return (
     <div>
       {spriteUrl ? (
         <img
           style={{
-            width: size,
+            width: size ?? "100%",
             imageRendering: "pixelated",
           }}
           src={spriteUrl}
@@ -24,7 +24,7 @@ function Sprite({ spriteUrl, size = 256 }: SpriteProps) {
         <div
           className="p-8 absolute bottom-0 left-0"
           style={{
-            width: size,
+            width: size ?? "256px",
             height: size,
             backgroundColor: "#ccc",
             display: "flex",

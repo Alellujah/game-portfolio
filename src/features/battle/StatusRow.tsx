@@ -49,7 +49,7 @@ function StatusRow({
               show ? "opacity-100 scale-100" : "opacity-0 scale-95"
             } ${hit ? "animate-hit" : ""}`}
           >
-            <Sprite spriteUrl={spriteUrl} size={spriteSize} />
+            <Sprite spriteUrl={spriteUrl} />
             {extra}
           </div>
         </>
@@ -62,7 +62,7 @@ function StatusRow({
             } ${hit ? "animate-hit" : ""}`}
           >
             {extra}
-            <Sprite spriteUrl={spriteUrl} size={spriteSize} />
+            <Sprite spriteUrl={spriteUrl} />
           </div>
           <div
             className={`col-span-1 flex items-end transition-all duration-500 ${
