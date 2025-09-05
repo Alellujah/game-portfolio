@@ -44,6 +44,20 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      - name: Optimize images (Squoosh)
+        run: |
+          pnpm dlx @squoosh/cli@latest --version
+          pnpm dlx @squoosh/cli@latest \
+            --force-overwrite \
+            -d dist \
+            --mozjpeg '{"quality":75}' \
+            --oxipng '{"level":2}' \
+            "dist/**/*.{png,jpg,jpeg}"
+
+      - name: Optimize SVGs (SVGO)
+        run: |
+          pnpm dlx svgo@latest -r -f dist || true
+
       - name: List build output (debug)
         run: |
           echo "Built files (top):" && ls -lah dist || true
