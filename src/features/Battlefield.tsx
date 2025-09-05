@@ -22,7 +22,6 @@ export default function Battlefield({
   playerParty,
 }: Props) {
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
-  const [playerSwitchingOut, setPlayerSwitchingOut] = useState(false);
 
   // Bridge mons to engine shape (fallback stats if missing)
   const toEngineMon = (m: Mon) => ({
@@ -86,9 +85,6 @@ export default function Battlefield({
     setLockUI(true);
     for (const e of evts) {
       if (e.type === "message") {
-        if (typeof e.payload === "string" && e.payload.startsWith("Come back,")) {
-          setPlayerSwitchingOut(true);
-        }
         setOverrideMsg(e.payload);
         await wait(Math.round(1000 * SPEED_MULT));
         continue;
@@ -144,7 +140,6 @@ export default function Battlefield({
           setWaiting(false);
         }
         // After acknowledgement/timeout, run enemy's step
-        setPlayerSwitchingOut(false);
         const followUp = engine.enemyStep();
         await playEvents(followUp);
         return; // upstream call will unlock UI
@@ -393,7 +388,7 @@ export default function Battlefield({
           />
         )}
 
-        {(selectedAction === "chg" && canInteract) && (
+        {selectedAction === "chg" && canInteract && (
           <ChangeOverlay
             party={engine.state.player.party}
             activeName={engPlayer.name}
@@ -416,7 +411,9 @@ export default function Battlefield({
           <ChangeOverlay
             party={engine.state.player.party}
             activeName={engPlayer.name}
-            onCancel={() => { /* cannot cancel forced change */ }}
+            onCancel={() => {
+              /* cannot cancel forced change */
+            }}
             onSelect={async (idx) => {
               if (idx == null) return;
               setForceChange(false);
