@@ -44,6 +44,12 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      # Use Node 18 for image tooling due to known Node 20+/22 incompatibilities
+      - name: Switch to Node 18 for optimization
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
       - name: Optimize images (Squoosh)
         run: |
           pnpm dlx @squoosh/cli@latest --version
