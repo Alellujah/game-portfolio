@@ -51,15 +51,42 @@ jobs:
           node-version: 18
 
       - name: Optimize images (Squoosh)
+        shell: bash
         run: |
-          # Warm up dlx cache and verify CLI is available (Squoosh has no --version flag)
+          set -euo pipefail
           pnpm dlx @squoosh/cli@latest -h || true
-          pnpm dlx @squoosh/cli@latest \
-            --force-overwrite \
-            -d dist \
-            --mozjpeg '{"quality":75}' \
-            --oxipng '{"level":2}' \
-            "dist/**/*.{png,jpg,jpeg}"
+
+          # Collect PNG files
+          mapfile -t PNGS < <(find dist -type f -name '*.png') || true
+          if [ ${#PNGS[@]} -gt 0 ]; then
+            echo "Optimizing ${#PNGS[@]} PNG files with oxipng..."
+            pnpm dlx @squoosh/cli@latest -d dist --oxipng '{"level":2}' "${PNGS[@]}"
+            # If Squoosh wrote '*.oxipng.png', rename back to original names
+            while IFS= read -r -d '' f; do
+              base="${f%.oxipng.png}.png"
+              mv -f "$f" "$base"
+            done < <(find dist -type f -name '*.oxipng.png' -print0)
+          else
+            echo "No PNG files found under dist/."
+          fi
+
+          # Collect JPEG files
+          mapfile -t JPGS < <(find dist -type f \( -name '*.jpg' -o -name '*.jpeg' \)) || true
+          if [ ${#JPGS[@]} -gt 0 ]; then
+            echo "Optimizing ${#JPGS[@]} JPEG files with mozjpeg..."
+            pnpm dlx @squoosh/cli@latest -d dist --mozjpeg '{"quality":75}' "${JPGS[@]}"
+            # Rename '*.mozjpeg.jpg' and '*.mozjpeg.jpeg' back to originals if created
+            while IFS= read -r -d '' f; do
+              base="${f%.mozjpeg.jpg}.jpg"
+              mv -f "$f" "$base"
+            done < <(find dist -type f -name '*.mozjpeg.jpg' -print0)
+            while IFS= read -r -d '' f; do
+              base="${f%.mozjpeg.jpeg}.jpeg"
+              mv -f "$f" "$base"
+            done < <(find dist -type f -name '*.mozjpeg.jpeg' -print0)
+          else
+            echo "No JPEG files found under dist/."
+          fi
 
       - name: Optimize SVGs (SVGO)
         run: |
