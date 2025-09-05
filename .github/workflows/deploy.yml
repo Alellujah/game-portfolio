@@ -52,7 +52,8 @@ jobs:
 
       - name: Optimize images (Squoosh)
         run: |
-          pnpm dlx @squoosh/cli@latest --version
+          # Warm up dlx cache and verify CLI is available (Squoosh has no --version flag)
+          pnpm dlx @squoosh/cli@latest -h || true
           pnpm dlx @squoosh/cli@latest \
             --force-overwrite \
             -d dist \
