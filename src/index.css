@@ -11,7 +11,8 @@ body {
 
 @font-face {
   font-family: "PokemonClassic";
-  src: url("/fonts/pokemon-classic.ttf") format("truetype");
+  /* Use processed asset path so it respects Vite base on Pages */
+  src: url("./assets/fonts/pokemon-classic.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
 }
@@ -65,7 +66,8 @@ body {
   transform: translateX(-50%);
   width: var(--dust-size, 48px);
   height: var(--dust-size, 48px);
-  background-image: url('/effects/dust.png');
+  /* Use processed asset path so it respects Vite base on Pages */
+  background-image: url('./assets/effects/dust.png');
   background-repeat: no-repeat;
   background-position: 0 0;
   background-size: calc(var(--dust-frames, 5) * 100%) 100%;

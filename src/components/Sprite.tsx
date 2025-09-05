@@ -9,15 +9,28 @@ interface SpriteProps {
  * - `size`: Size of the sprite in pixels (default: 96).
  */
 function Sprite({ spriteUrl, size }: SpriteProps) {
+  // Resolve asset path for GitHub Pages (project subpath)
+  const resolved = (() => {
+    if (!spriteUrl) return undefined;
+    // Ignore absolute http(s) or data URLs
+    if (/^(?:https?:)?\/\//.test(spriteUrl) || spriteUrl.startsWith("data:")) {
+      return spriteUrl;
+    }
+    // If it starts with a leading slash, prefix Vite base
+    if (spriteUrl.startsWith("/")) {
+      return import.meta.env.BASE_URL + spriteUrl.slice(1);
+    }
+    return spriteUrl;
+  })();
   return (
     <div>
-      {spriteUrl ? (
+      {resolved ? (
         <img
           style={{
             width: size ?? "80%",
             imageRendering: "pixelated",
           }}
-          src={spriteUrl}
+          src={resolved}
           alt="Sprite"
         />
       ) : (
