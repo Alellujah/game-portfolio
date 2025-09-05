@@ -90,6 +90,7 @@ function FightMenu({ skills, onSelect }: FightMenuProps) {
             <ul className="space-y-1">
               {skills.map((s, i) => {
                 const isSel = i === safeIndex;
+                const out = (s.pp ?? 0) <= 0;
                 return (
                   <li key={i} className="mt-2 first:mt-0">
                     <button
@@ -98,12 +99,19 @@ function FightMenu({ skills, onSelect }: FightMenuProps) {
                         e.stopPropagation();
                         onSelect(s);
                       }}
-                      className="w-full text-left text-black hover:bg-black hover:text-white px-1"
+                      className={`w-full text-left px-1 ${
+                        out
+                          ? "text-black/50 cursor-not-allowed"
+                          : "text-black hover:bg-black hover:text-white"
+                      }`}
                     >
                       <span className="inline-block w-4 mr-2">
                         {isSel ? "▶" : ""}
                       </span>
                       <span className="tracking-wider">{s.name}</span>
+                      {out && (
+                        <span className="ml-2 text-[10px] opacity-70">(NO PP)</span>
+                      )}
                     </button>
                   </li>
                 );

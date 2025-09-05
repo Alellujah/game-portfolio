@@ -51,38 +51,93 @@ export interface Move {
   power: number;
   accuracy: number;
   type?: string;
-  pp?: number;
+  pp: number; // current PP
+  maxPP: number; // maximum PP
 }
 
 export interface BattleState {
-  player: { active: Mon };
+  player: { active: Mon; party: Mon[] };
   enemy: { active: Mon };
   turn: "player" | "enemy";
   ended?: "won" | "lost";
   log: string[];
+  inventory: Record<ItemKey, number>;
 }
 
 export interface Event {
-  type: "message" | "hp" | "end";
+  type: "message" | "hp" | "end" | "pause";
   payload: any;
 }
 
 export interface TurnAction {
-  kind: "move" | "flee";
-  index?: number;
+  kind: "move" | "flee" | "item" | "change";
+  index?: number; // for move
+  itemKey?: ItemKey; // for item
+  newMon?: Mon; // for change
 }
 
 export type RNG = () => number;
 export const defaultRng: RNG = () => Math.random();
 
 /** create a fresh battle */
-export function createBattle(player: Mon, enemy: Mon): BattleState {
+export function createBattle(player: Mon, enemy: Mon, playerParty?: Mon[]): BattleState {
+  const party = (playerParty && playerParty.length ? playerParty : [player]).slice();
+  // ensure the active is a reference from the party array (so HP/PP persist)
+  const active = party.find((m) => m.name === player.name) ?? party[0];
   return {
-    player: { active: player },
+    player: { active, party },
     enemy: { active: enemy },
     turn: "player",
     log: [],
+    inventory: { coffee: 2, beer: 2, cigarette: 3, "7days": 1 },
   };
+}
+
+// --- Items ---
+export type ItemKey = "coffee" | "beer" | "cigarette" | "7days";
+
+type ItemDef = {
+  name: string;
+  hp: number; // HP restored (flat)
+  pp: number; // PP restored for each move (flat)
+};
+
+export const ITEMS: Record<ItemKey, ItemDef> = {
+  // Only COFFEE restores PP; others restore HP only
+  coffee: { name: "Coffee", hp: 0, pp: 2 },
+  beer: { name: "Beer", hp: 35, pp: 0 },
+  cigarette: { name: "Cigarette", hp: 10, pp: 0 },
+  "7days": { name: "7Days", hp: 60, pp: 0 },
+};
+
+function clamp(n: number, lo: number, hi: number) {
+  return Math.max(lo, Math.min(hi, n));
+}
+
+function funnyItemMessage(
+  key: ItemKey,
+  monName: string,
+  hpGain: number,
+  ppGainPerMove: number
+): string {
+  const N = monName.toUpperCase();
+  const parts: string[] = [];
+  if (hpGain > 0) parts.push(`HP +${hpGain}`);
+  if (ppGainPerMove > 0) parts.push(`PP +${ppGainPerMove} to all moves`);
+  const eff = parts.length ? ` ${parts.join(", ")}.` : 
+    ` It didn't seem to do much...`;
+  switch (key) {
+    case "beer":
+      return `${N} just chugged a BEER in 5s!${eff}`;
+    case "coffee":
+      return `${N} downed a COFFEE shot! Eyes wide open.${eff}`;
+    case "cigarette":
+      return `${N} lit a CIGARETTE... questionable buff.${eff}`;
+    case "7days":
+      return `${N} pulled a 7 DAYS crunch! Somehow revived.${eff}`;
+    default:
+      return `${N} used an item.${eff}`;
+  }
 }
 
 /** simplistic AI: choose first available move */
@@ -113,9 +168,89 @@ export function performTurn(
     return events;
   }
 
+  if (action.kind === "item" && action.itemKey) {
+    const def = ITEMS[action.itemKey];
+    if (def) {
+      // consume from inventory if available
+      const left = state.inventory[action.itemKey] ?? 0;
+      if (left <= 0) {
+        events.push({ type: "message", payload: `No ${def.name} left!` });
+      } else {
+        state.inventory[action.itemKey] = left - 1;
+        const beforeHp = player.hp;
+        // restore HP if any
+        if (def.hp > 0) player.hp = clamp(player.hp + def.hp, 0, player.maxHp);
+        // restore PP for each move
+        if (def.pp > 0) {
+          for (const mv of player.moves || []) {
+            mv.pp = clamp(mv.pp + def.pp, 0, mv.maxPP);
+          }
+        }
+        const hpGain = player.hp - beforeHp;
+        const funny = funnyItemMessage(action.itemKey, player.name, hpGain, def.pp);
+        events.push({ type: "message", payload: funny });
+        // emit HP event only if changed to avoid redundant bars
+        if (hpGain !== 0) {
+          events.push({ type: "hp", payload: { target: "player", value: player.hp } });
+        }
+      }
+    } else {
+      events.push({ type: "message", payload: `Nothing happened...` });
+    }
+    // After using an item, pause to let player read before enemy acts
+    events.push({ type: "pause", payload: "continue" });
+    // Do not process enemy action here; the UI will trigger enemy step after pause
+    state.turn = "enemy";
+    state.log.push(
+      ...events.map((e) => (e.type === "message" || e.type === "end" ? e.payload : ""))
+    );
+    return events;
+  }
+
+  if (action.kind === "change") {
+    const prev = player.name;
+    if (typeof action.index === "number") {
+      const idx = Math.max(0, Math.min(action.index, state.player.party.length - 1));
+      const candidate = state.player.party[idx];
+      if (candidate && candidate.name !== prev && candidate.hp > 0) {
+        state.player.active = candidate;
+        const next = state.player.active.name;
+        events.push({ type: "message", payload: `Come back, ${prev.toUpperCase()}!` });
+        events.push({ type: "message", payload: `Go, ${next.toUpperCase()}!` });
+        // pause after switching to allow UI to update before enemy action
+        events.push({ type: "pause", payload: "continue" });
+        state.turn = "enemy";
+        state.log.push(
+          ...events.map((e) => (e.type === "message" || e.type === "end" ? e.payload : ""))
+        );
+        return events;
+      } else {
+        events.push({ type: "message", payload: `Can't switch to that mon right now.` });
+      }
+    } else if (action.newMon) {
+      // legacy direct mon switch (no party binding)
+      state.player.active = action.newMon;
+      const next = state.player.active.name;
+      events.push({ type: "message", payload: `Come back, ${prev.toUpperCase()}!` });
+      events.push({ type: "message", payload: `Go, ${next.toUpperCase()}!` });
+      events.push({ type: "pause", payload: "continue" });
+      state.turn = "enemy";
+      state.log.push(
+        ...events.map((e) => (e.type === "message" || e.type === "end" ? e.payload : ""))
+      );
+      return events;
+    }
+  }
+
   if (action.kind === "move" && action.index !== undefined) {
     const move = player.moves[action.index];
-    if (move && rng() <= (move.accuracy ?? 100) / 100) {
+    if (!move) {
+      // invalid index, do nothing but consume turn
+    } else if (move.pp <= 0) {
+      events.push({ type: "message", payload: `${move.name} has no PP left!` });
+    } else if (rng() <= (move.accuracy ?? 100) / 100) {
+      // consume PP
+      move.pp = clamp(move.pp - 1, 0, move.maxPP);
       const dmg = calculateDamage(
         player.level,
         player.attack,
@@ -139,7 +274,7 @@ export function performTurn(
     } else {
       events.push({
         type: "message",
-        payload: `${player.name}'s attack missed!`,
+        payload: `Player ${player.name.toUpperCase()}'s attack missed!`,
       });
     }
   }
@@ -149,7 +284,15 @@ export function performTurn(
     const enemyAction = enemyAI(state);
     if (enemyAction.kind === "move" && enemyAction.index !== undefined) {
       const move = enemy.moves[enemyAction.index];
-      if (move && rng() <= (move.accuracy ?? 100) / 100) {
+      if (!move) {
+        // no-op
+      } else if (move.pp <= 0) {
+        events.push({
+          type: "message",
+          payload: `Enemy ${enemy.name.toUpperCase()} has no PP for ${move.name}!`,
+        });
+      } else if (rng() <= (move.accuracy ?? 100) / 100) {
+        move.pp = clamp(move.pp - 1, 0, move.maxPP);
         const dmg = calculateDamage(
           enemy.level,
           enemy.attack,
@@ -169,13 +312,13 @@ export function performTurn(
           state.ended = "lost";
           events.push({
             type: "end",
-            payload: `${player.name} fainted! You lose!`,
+            payload: `Player ${player.name.toUpperCase()} fainted! You lose!`,
           });
         }
       } else {
         events.push({
           type: "message",
-          payload: `${enemy.name}'s attack missed!`,
+          payload: `Enemy ${enemy.name.toUpperCase()}'s attack missed!`,
         });
       }
     }
@@ -186,6 +329,58 @@ export function performTurn(
     ...events.map((e) =>
       e.type === "message" || e.type === "end" ? e.payload : ""
     )
+  );
+  return events;
+}
+
+/** Run only the enemy's action (used after a pause like item usage) */
+export function enemyStep(state: BattleState, rng: RNG = defaultRng): Event[] {
+  const events: Event[] = [];
+  if (state.ended) return events;
+  const player = state.player.active;
+  const enemy = state.enemy.active;
+  const enemyAction = enemyAI(state);
+  if (enemyAction.kind === "move" && enemyAction.index !== undefined) {
+    const move = enemy.moves[enemyAction.index];
+    if (!move) {
+      // no-op
+    } else if (move.pp <= 0) {
+      events.push({
+        type: "message",
+        payload: `Enemy ${enemy.name.toUpperCase()} has no PP for ${move.name}!`,
+      });
+    } else if (rng() <= (move.accuracy ?? 100) / 100) {
+      move.pp = clamp(move.pp - 1, 0, move.maxPP);
+      const dmg = calculateDamage(
+        enemy.level,
+        enemy.attack,
+        player.defense,
+        move.power
+      );
+      player.hp = Math.max(0, player.hp - dmg);
+      events.push({
+        type: "message",
+        payload: `Enemy ${enemy.name.toUpperCase()} used ${move.name.toUpperCase()}!`,
+      });
+      events.push({ type: "hp", payload: { target: "player", value: player.hp } });
+      if (player.hp <= 0) {
+        state.ended = "lost";
+        events.push({
+          type: "end",
+          payload: `Player ${player.name.toUpperCase()} fainted! You lose!`,
+        });
+      }
+    } else {
+      events.push({
+        type: "message",
+        payload: `Enemy ${enemy.name.toUpperCase()}'s attack missed!`,
+      });
+    }
+  }
+
+  state.turn = "player";
+  state.log.push(
+    ...events.map((e) => (e.type === "message" || e.type === "end" ? e.payload : ""))
   );
   return events;
 }

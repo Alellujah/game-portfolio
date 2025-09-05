@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import {
   createBattle,
   performTurn,
+  enemyStep as engineEnemyStep,
   type BattleState,
   type Event as BattleEvent,
   type Mon,
@@ -13,6 +14,7 @@ export type UseBattleEngineOptions = {
   player: Mon;
   enemy: Mon;
   rng?: RNG;
+  playerParty?: Mon[];
 };
 
 export type UseBattleEngine = {
@@ -29,10 +31,18 @@ export type UseBattleEngine = {
   ended: BattleState["ended"] | undefined;
   /** run player's move by index (0..3). also runs enemy reply if battle not ended */
   doMove: (index: number) => BattleEvent[];
+  /** use an item (consumes player turn) */
+  useItem: (itemKey: import("../engine/game").ItemKey) => BattleEvent[];
+  /** change the active mon (consumes player turn) */
+  changeMon: (mon: Mon) => BattleEvent[];
+  /** change by party index (preferred) */
+  changeMonIndex: (index: number) => BattleEvent[];
   /** attempt to flee (ends battle immediately) */
   flee: () => BattleEvent[];
   /** reset battle to initial mons */
   reset: () => void;
+  /** run only the enemy response (used after PAUSE) */
+  enemyStep: () => BattleEvent[];
 };
 
 /**
@@ -47,7 +57,11 @@ export default function useBattleEngine(
 
   // Keep the authoritative engine state in a ref (engine mutates it internally)
   const stateRef = useRef<BattleState>(
-    createBattle(structuredClone(opts.player), structuredClone(opts.enemy))
+    createBattle(
+      structuredClone(opts.player),
+      structuredClone(opts.enemy),
+      opts.playerParty ? structuredClone(opts.playerParty) : undefined
+    )
   );
 
   // Local react state mirrors for rendering
@@ -86,19 +100,47 @@ export default function useBattleEngine(
     [apply, rng]
   );
 
+  const useItem = useCallback(
+    (itemKey: import("../engine/game").ItemKey) => {
+      const events = performTurn(
+        stateRef.current,
+        { kind: "item", itemKey },
+        rng
+      );
+      return apply(events);
+    },
+    [apply, rng]
+  );
+
   const flee = useCallback(() => {
     const events = performTurn(stateRef.current, { kind: "flee" }, rng);
+    return apply(events);
+  }, [apply, rng]);
+
+  const changeMon = useCallback((mon: Mon) => {
+    const events = performTurn(stateRef.current, { kind: "change", newMon: mon }, rng);
+    return apply(events);
+  }, [apply, rng]);
+
+  const changeMonIndex = useCallback((index: number) => {
+    const events = performTurn(stateRef.current, { kind: "change", index }, rng);
     return apply(events);
   }, [apply, rng]);
 
   const reset = useCallback(() => {
     stateRef.current = createBattle(
       structuredClone(opts.player),
-      structuredClone(opts.enemy)
+      structuredClone(opts.enemy),
+      opts.playerParty ? structuredClone(opts.playerParty) : undefined
     );
     setLastEvents([]);
     sync();
   }, [opts.enemy, opts.player, sync]);
+
+  const enemyStep = useCallback(() => {
+    const events = engineEnemyStep(stateRef.current, rng);
+    return apply(events);
+  }, [apply, rng]);
 
   const ended = stateSnap.ended;
 
@@ -110,8 +152,12 @@ export default function useBattleEngine(
     log: stateSnap.log,
     ended,
     doMove,
+    useItem,
+    changeMon,
+    changeMonIndex,
     flee,
     reset,
+    enemyStep,
   };
 }
 

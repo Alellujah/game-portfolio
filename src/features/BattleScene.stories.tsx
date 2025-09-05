@@ -14,9 +14,9 @@ type Story = StoryObj<typeof BattleScene>;
 
 export const Default: Story = {
   args: {
-    playerSpriteUrl: "public/players/back-recruiter-green.png",
-    enemySpriteUrl: "public/players/nerd_it_guy-green.png",
-    playerMons: [MONS["remotemon"]],
+    playerSpriteUrl: "public/players/developer-back.png",
+    enemySpriteUrl: "public/players/recruiter-front.png",
+    playerMons: [MONS["remotemon"], MONS["levelupzord"], MONS["leetcodebat"]],
     enemyMons: [MONS["remotemon"]],
   },
 };

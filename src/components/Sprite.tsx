@@ -14,7 +14,7 @@ function Sprite({ spriteUrl, size }: SpriteProps) {
       {spriteUrl ? (
         <img
           style={{
-            width: size ?? "100%",
+            width: size ?? "80%",
             imageRendering: "pixelated",
           }}
           src={spriteUrl}

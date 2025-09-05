@@ -1,6 +1,6 @@
-import Sprite from "../../components/Sprite";
 import StatusBar from "../../components/StatusBar";
 import type { ReactNode } from "react";
+import AnimatedSwitchSprite from "./AnimatedSwitchSprite";
 
 export type StatusRowProps = {
   side: "enemy" | "player";
@@ -18,17 +18,13 @@ function StatusRow({
   hit,
   spriteUrl,
   status,
-  spriteSize = 132,
+  spriteSize,
   extra,
 }: StatusRowProps) {
   const isEnemy = side === "enemy";
 
   return (
-    <div
-      className={`grid grid-cols-3 gap-4 items-stretch ${
-        isEnemy ? "mb-4" : ""
-      }`}
-    >
+    <div className={`grid grid-cols-3 gap-4 `}>
       {isEnemy ? (
         <>
           {/* Enemy status on the left, sprite on the right */}
@@ -49,7 +45,11 @@ function StatusRow({
               show ? "opacity-100 scale-100" : "opacity-0 scale-95"
             } ${hit ? "animate-hit" : ""}`}
           >
-            <Sprite spriteUrl={spriteUrl} />
+            <AnimatedSwitchSprite
+              side="enemy"
+              spriteUrl={spriteUrl}
+              size={spriteSize}
+            />
             {extra}
           </div>
         </>
@@ -62,7 +62,11 @@ function StatusRow({
             } ${hit ? "animate-hit" : ""}`}
           >
             {extra}
-            <Sprite spriteUrl={spriteUrl} />
+            <AnimatedSwitchSprite
+              side="player"
+              spriteUrl={spriteUrl}
+              size={spriteSize}
+            />
           </div>
           <div
             className={`col-span-1 flex items-end transition-all duration-500 ${

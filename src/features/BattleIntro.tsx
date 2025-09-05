@@ -78,26 +78,30 @@ function BattleIntro({
         else handleFinish();
       }}
     >
-      {/* Enemy side (top row) */}
-      <div className="grid grid-cols-3 gap-4 items-stretch mb-4">
+      {/* Enemy side (top area) — classic top-right placement with platform */}
+      <div className="grid grid-cols-3 gap-4 items-stretch mb-2">
+        <div className="col-span-2" />
         <div
-          className={`col-span-2 flex justify-end transition-all duration-500 ease-out ${
+          className={`col-span-1 relative flex flex-col items-end pr-2 transition-all duration-500 ease-out ${
             exiting
               ? "opacity-0 translate-x-6"
               : enemyIn
               ? "opacity-100 translate-x-0"
               : "opacity-0 translate-x-6"
           }`}
+          style={{ minHeight: 140 }}
         >
-          <Sprite spriteUrl={enemySpriteUrl} size={132} />
           <MonsPreview mons={enemyMons} />
+          <div className="relative mt-1">
+            <Sprite spriteUrl={enemySpriteUrl} />
+          </div>
         </div>
       </div>
 
-      {/* Player side (second row) */}
+      {/* Player side (bottom area) — classic bottom-left placement with platform */}
       <div className="grid grid-cols-3 gap-4 items-stretch">
         <div
-          className={`col-span-2 justify-center flex transition-all duration-500 ease-out ${
+          className={`col-span-2 flex flex-col items-start pl-2 transition-all duration-500 ease-out ${
             exiting
               ? "opacity-0 -translate-x-6"
               : playerIn
@@ -106,12 +110,14 @@ function BattleIntro({
           }`}
         >
           <MonsPreview mons={playerMons} />
-          <Sprite spriteUrl={playerSpriteUrl} size={132} />
+          <div className="relative">
+            <Sprite spriteUrl={playerSpriteUrl} />
+          </div>
         </div>
       </div>
 
       {/* Message appears after sprites enter */}
-      <div className="relative mt-2">
+      <div className="relative">
         <div className="grid grid-cols-3 gap-4 items-stretch">
           <div
             className={`col-span-3 transition-all duration-300 ease-out ${

@@ -31,7 +31,11 @@ export default function BattleScene({
       )}
 
       {scene === "field" && (
-        <Battlefield playerMon={playerMons[0]} enemyMon={enemyMons[0]} />
+        <Battlefield
+          playerMon={playerMons[0]}
+          enemyMon={enemyMons[0]}
+          playerParty={playerMons}
+        />
       )}
 
       {scene === "end" && <></>}
