@@ -23,7 +23,6 @@ export default function FinalScene({
   playerSpriteUrl,
   enemySpriteUrl,
   result,
-  onFinish,
   messages,
   onPlayAgain,
   onContact,
@@ -76,7 +75,15 @@ export default function FinalScene({
       clearTimeout(t);
       window.removeEventListener("keydown", onKey);
     };
-  }, [idx, msgs.length, showMenu, menuIndex, onPlayAgain, onContact, contactUrl]);
+  }, [
+    idx,
+    msgs.length,
+    showMenu,
+    menuIndex,
+    onPlayAgain,
+    onContact,
+    contactUrl,
+  ]);
 
   return (
     <div className="bg-stone-200 p-4 mx-auto select-none">
@@ -122,34 +129,40 @@ export default function FinalScene({
             />
           </div>
         </div>
-      {/* Final options menu (overlay on top of message pane) */}
-      {showMenu && (
-        <div className="absolute inset-0 z-10 grid place-items-center">
-          <Container fixedWidth className="w-full bg-white">
-            <div className="text-black">
-              <button
-                className="block w-full text-left py-1"
-                onMouseEnter={() => setMenuIndex(0)}
-                onClick={() => (onPlayAgain ? onPlayAgain() : window.location.reload())}
-              >
-                <span className="inline-block w-4 mr-1">{menuIndex === 0 ? "▶" : ""}</span>
-                Play again
-              </button>
-              <button
-                className="block w-full text-left py-1"
-                onMouseEnter={() => setMenuIndex(1)}
-                onClick={() => {
-                  if (onContact) onContact();
-                  else if (contactUrl) window.open(contactUrl, "_blank");
-                }}
-              >
-                <span className="inline-block w-4 mr-1">{menuIndex === 1 ? "▶" : ""}</span>
-                Send me a message
-              </button>
-            </div>
-          </Container>
-        </div>
-      )}
+        {/* Final options menu (overlay on top of message pane) */}
+        {showMenu && (
+          <div className="absolute inset-0 z-10 grid place-items-center">
+            <Container fixedWidth className="w-full bg-white">
+              <div className="text-black">
+                <button
+                  className="block w-full text-left py-1"
+                  onMouseEnter={() => setMenuIndex(0)}
+                  onClick={() =>
+                    onPlayAgain ? onPlayAgain() : window.location.reload()
+                  }
+                >
+                  <span className="inline-block w-4 mr-1">
+                    {menuIndex === 0 ? "▶" : ""}
+                  </span>
+                  Play again
+                </button>
+                <button
+                  className="block w-full text-left py-1"
+                  onMouseEnter={() => setMenuIndex(1)}
+                  onClick={() => {
+                    if (onContact) onContact();
+                    else if (contactUrl) window.open(contactUrl, "_blank");
+                  }}
+                >
+                  <span className="inline-block w-4 mr-1">
+                    {menuIndex === 1 ? "▶" : ""}
+                  </span>
+                  Send me a message
+                </button>
+              </div>
+            </Container>
+          </div>
+        )}
       </div>
     </div>
   );
