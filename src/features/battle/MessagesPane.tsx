@@ -22,7 +22,16 @@ function MessagesPane({
       ? lastNonEmptyMsg
       : fallback;
 
-  return <BattleMessages message={text} className="h-full" waiting={waiting} />;
+  return (
+    <BattleMessages
+      message={text}
+      className="h-[104px]" /* taller to fit more lines */
+      waiting={waiting}
+      /* slightly faster typing and longer dwell */
+      speed={24}
+      autoPageDelay={1400}
+    />
+  );
 }
 
 export default MessagesPane;

@@ -38,7 +38,10 @@ export default function ChangeOverlay({
         onClick={onCancel}
       />
       <div className="absolute inset-0 grid place-items-center z-10 px-4">
-        <Container className="w-full max-w-md bg-white">
+        <Container
+          className="w-full max-w-md bg-white"
+          style={{ position: "absolute", bottom: 0 }}
+        >
           <div
             ref={ref}
             tabIndex={0}

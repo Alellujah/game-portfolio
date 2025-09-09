@@ -33,20 +33,23 @@ export default function AnimatedSwitchSprite({
     return () => clearTimeout(t);
   }, [spriteUrl, current]);
 
-  const enterClass = side === "player" ? "simple-enter-left" : "simple-enter-right";
+  const enterClass =
+    side === "player" ? "simple-enter-left" : "simple-enter-right";
 
   const wrapperStyle = size != null ? { width: size, height: size } : undefined;
-  const wrapperClass = size == null ? "relative w-full h-full" : "relative";
+  const wrapperClass =
+    size == null
+      ? "relative w-full h-full"
+      : side === "enemy"
+      ? "relative"
+      : "";
 
   return (
     <div className={`${wrapperClass} ${className}`} style={wrapperStyle}>
       {/* Invisible baseline to preserve layout height/width */}
-      <div className="invisible">
-        <Sprite spriteUrl={current} size={size} />
-      </div>
       {!blink && current && (
-        <div className={`absolute inset-0 ${enterClass}`}>
-          <Sprite spriteUrl={current} size={size} />
+        <div className={`absolute bottom-0 inset-0 ${enterClass}`}>
+          <Sprite spriteUrl={current} size={size} player={side === "player"} />
         </div>
       )}
     </div>

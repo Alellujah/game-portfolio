@@ -53,17 +53,17 @@ function BattleMenu({ onSelect, disabled }: BattleMenuProps) {
               setSelected(idx);
               onSelect(action.value);
             }}
-            className={`relative text-black text-xl font-bold px-2 py-1 transition-none text-left`}
+            className={`relative text-black text-xs  font-bold px-2 py-1 transition-none text-left`}
             tabIndex={-1}
           >
             {selected === idx && (
               <span
                 style={{
                   position: "absolute",
-                  left: -12,
+                  left: -1,
                   top: "50%",
                   transform: "translateY(-60%)",
-                  fontSize: "1.2em",
+                  fontSize: "1em",
                   color: "black",
                   fontWeight: "bold",
                 }}

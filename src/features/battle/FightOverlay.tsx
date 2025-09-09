@@ -15,7 +15,7 @@ export type FightOverlayProps = {
 function FightOverlay({ moves, onSelect, onCancel }: FightOverlayProps) {
   return (
     <div
-      className="absolute inset-0 z-30"
+      className="absolute inset-0 z-30 bottom-0"
       role="dialog"
       aria-modal="true"
       // prevent key events from leaking to the underlying battlefield
@@ -29,7 +29,7 @@ function FightOverlay({ moves, onSelect, onCancel }: FightOverlayProps) {
       />
 
       {/* Centered panel */}
-      <div className="absolute inset-0 grid place-items-center z-10 px-4">
+      <div className="absolute inset-0 grid place-items-center z-10">
         <div className="w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
           <FightMenu skills={moves} onSelect={onSelect} />
         </div>

@@ -120,20 +120,30 @@ export default function Battlefield({
           await wait(600);
         } else {
           setWaiting(true);
-          // wait for key/click
+          // wait for key/click but fall back to auto-continue after delay
           await new Promise<void>((resolve) => {
             const onKey = (ev: KeyboardEvent) => {
               if (ev.key === "Enter" || ev.key === " ") {
-                window.removeEventListener("keydown", onKey);
-                window.removeEventListener("click", onClick);
+                // Try to avoid double-handling by other listeners
+                if (typeof (ev as any).stopImmediatePropagation === "function")
+                  (ev as any).stopImmediatePropagation();
+                cleanup();
                 resolve();
               }
             };
             const onClick = () => {
-              window.removeEventListener("keydown", onKey);
-              window.removeEventListener("click", onClick);
+              cleanup();
               resolve();
             };
+            const timeout = window.setTimeout(() => {
+              cleanup();
+              resolve();
+            }, Math.round(1500 * SPEED_MULT));
+            function cleanup() {
+              window.removeEventListener("keydown", onKey);
+              window.removeEventListener("click", onClick);
+              window.clearTimeout(timeout);
+            }
             window.addEventListener("keydown", onKey);
             window.addEventListener("click", onClick);
           });
@@ -274,7 +284,7 @@ export default function Battlefield({
 
   return (
     <div
-      className="bg-stone-200 p-4 max-w-4xl mx-auto"
+      className="bg-stone-200 p-4 max-w-xl mx-auto"
       onClick={() => {
         if (lockUIRef.current || overrideMsg === "") return;
         if (
@@ -289,7 +299,7 @@ export default function Battlefield({
         side="enemy"
         show={phase !== "start"}
         hit={enemyHit}
-        spriteSize={400}
+        spriteSize={170}
         spriteUrl={enemyMon.spriteFrontUrl}
         status={{
           name: enemyMon.name,
@@ -306,6 +316,7 @@ export default function Battlefield({
           phase === "enemyTurn"
         }
         hit={playerHit}
+        spriteSize={170}
         spriteUrl={activeUiMon.spriteBackUrl}
         status={{
           name: engPlayer.name,
@@ -316,8 +327,8 @@ export default function Battlefield({
         animateHp={!hpInstant}
       />
       <div className="relative">
-        <div className="grid grid-cols-3 gap-4 items-stretch">
-          <div className="col-span-2">
+        <div className="grid grid-cols-5 gap-4 items-stretch">
+          <div className="col-span-3">
             <MessagesPane
               overrideMsg={overrideMsg}
               lastNonEmptyMsg={lastNonEmptyMsg}
@@ -327,7 +338,7 @@ export default function Battlefield({
             />
           </div>
           <div
-            className={`col-span-1 ${
+            className={`col-span-2 ${
               !canInteract ? "opacity-50 pointer-events-none" : ""
             }`}
           >

@@ -56,21 +56,25 @@ function FightMenu({ skills, onSelect }: FightMenuProps) {
   }, []);
 
   return (
-    <Container className="w-full bg-white">
+    <Container
+      className="w-full bg-white"
+      style={{ position: "absolute", bottom: 0 }}
+      // childrenClasses={"absolute bottom-0"}
+    >
       <div
         ref={containerRef}
         tabIndex={0}
         onKeyDown={handleKeyDown}
         role="dialog"
         aria-modal="true"
-        className="w-full border-black bg-white p-2 outline-none"
+        className="w-full border-black bg-white p-1 outline-none"
       >
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-4 gap-2">
           {/* LEFT: info boxes */}
           <div className="col-span-1 space-y-1">
             {/* TYPE box */}
-            <div className="border-2 border-black p-2 leading-none">
-              <div className="flex items-baseline justify-between">
+            <div className="border-2 border-black p-1 leading-none">
+              <div className="flex flex-wrap items-baseline justify-between">
                 <span className="text-xs text-black">TYPE/</span>
                 <span className="text-xs text-black">
                   {selected?.type ?? "—"}
@@ -86,7 +90,7 @@ function FightMenu({ skills, onSelect }: FightMenuProps) {
           </div>
 
           {/* RIGHT: move list with cursor */}
-          <div className="col-span-2 border-2 border-black p-2">
+          <div className="col-span-3 border-2 border-black p-2">
             <ul className="space-y-1">
               {skills.map((s, i) => {
                 const isSel = i === safeIndex;
@@ -108,9 +112,9 @@ function FightMenu({ skills, onSelect }: FightMenuProps) {
                       <span className="inline-block w-4 mr-2">
                         {isSel ? "▶" : ""}
                       </span>
-                      <span className="tracking-wider">{s.name}</span>
+                      <span className="tracking-wider text-xs">{s.name}</span>
                       {out && (
-                        <span className="ml-2 text-[10px] opacity-70">(NO PP)</span>
+                        <span className="ml-2 text-xs opacity-70">(NO PP)</span>
                       )}
                     </button>
                   </li>

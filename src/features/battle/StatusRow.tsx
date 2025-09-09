@@ -26,12 +26,12 @@ function StatusRow({
   const isEnemy = side === "enemy";
 
   return (
-    <div className={`grid grid-cols-3 gap-4 `}>
+    <div className={`grid grid-cols-4 gap-4 ${!isEnemy && "h-[124px]"} `}>
       {isEnemy ? (
         <>
           {/* Enemy status on the left, sprite on the right */}
           <div
-            className={`col-span-1 flex items-start transition-all duration-500 ${
+            className={`col-span-2 flex items-start transition-all duration-500 ${
               show ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-6"
             }`}
           >
@@ -60,7 +60,7 @@ function StatusRow({
         <>
           {/* Player sprite on the left, status on the right */}
           <div
-            className={`col-span-2 justify-center flex items-center gap-2 transition-all duration-500 ${
+            className={`col-span-2 h-[124px] relative gap-2 transition-all duration-500 ${
               show ? "opacity-100 translate-x-0" : "opacity-0 translate-x-6"
             } ${hit ? "animate-hit" : ""}`}
           >
@@ -72,7 +72,7 @@ function StatusRow({
             />
           </div>
           <div
-            className={`col-span-1 flex items-end transition-all duration-500 ${
+            className={`col-span-2 flex items-end transition-all duration-500 ${
               show ? "opacity-100 translate-x-0" : "opacity-0 translate-x-6"
             }`}
           >

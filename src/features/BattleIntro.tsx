@@ -26,12 +26,7 @@ function BattleIntro({
   const [showMessage, setShowMessage] = useState(false);
   const [exiting, setExiting] = useState(false);
 
-  const fallbackMessages = [
-    "FABIO wants to battle!",
-    "FABIO: So you think you can recruit me?",
-    "You win, we can talk",
-    "...just a detail, I built this game, eheheh",
-  ];
+  const fallbackMessages = ["FABIO wants to battle!", "aaa"];
   const msgs = messages && messages.length > 0 ? messages : fallbackMessages;
   const [msgIndex, setMsgIndex] = useState(0);
 
@@ -72,7 +67,7 @@ function BattleIntro({
 
   return (
     <div
-      className="bg-stone-200 p-4 max-w-4xl mx-auto select-none"
+      className="bg-stone-200 p-4 mx-auto select-none"
       onClick={() => {
         if (!showMessage) return;
         if (msgIndex < msgs.length - 1) setMsgIndex((i) => i + 1);
@@ -112,7 +107,7 @@ function BattleIntro({
         >
           <MonsPreview mons={playerMons} />
           <div className="relative">
-            <Sprite spriteUrl={playerSpriteUrl} />
+            <Sprite spriteUrl={playerSpriteUrl} size={123} />
           </div>
         </div>
       </div>
@@ -130,8 +125,10 @@ function BattleIntro({
             }`}
           >
             <BattleMessages
-              message={showMessage ? msgs[msgIndex] : ""}
-              className="h-full w-full"
+              autoPageDelay={2000}
+              speed={30}
+              message={fallbackMessages[0]}
+              className="w-full h-[104px]"
               waiting={showMessage && !exiting}
             />
           </div>

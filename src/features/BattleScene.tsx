@@ -2,6 +2,7 @@ import { useState } from "react";
 import BattleIntro from "./BattleIntro";
 import Battlefield from "./Battlefield";
 import { type Mon } from "../engine/mons";
+import { SCREEN_H, SCREEN_W } from "../config/ui";
 
 interface Props {
   playerSpriteUrl: string;
@@ -19,7 +20,10 @@ export default function BattleScene({
   const [scene, setScene] = useState<"intro" | "field" | "end">("intro");
 
   return (
-    <>
+    <div
+      style={{ height: SCREEN_H, width: SCREEN_W, border: "1px solid black" }}
+      className={"bg-stone-200"}
+    >
       {scene === "intro" && (
         <BattleIntro
           playerSpriteUrl={playerSpriteUrl}
@@ -41,6 +45,6 @@ export default function BattleScene({
       )}
 
       {scene === "end" && <></>}
-    </>
+    </div>
   );
 }

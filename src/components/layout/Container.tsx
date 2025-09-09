@@ -4,17 +4,26 @@ import DecorativeCorners from "./DecorativeCorners";
 interface Props extends PropsWithChildren {
   fixedWidth?: boolean;
   className?: string;
+  childrenClasses?: string;
+  style?: React.CSSProperties;
 }
 
-function Container({ children, fixedWidth, className }: Props) {
-  const width = fixedWidth ? "flex" : "inline-block";
+function Container({
+  children,
+  fixedWidth,
+  className,
+  childrenClasses,
+  style,
+}: Props) {
+  const display = fixedWidth ? "flex" : "inline-block";
   return (
     <>
       <div
-        className={`${className} bg-white relative border-4 border-black p-4 ${width}`}
+        className={`${className} bg-white relative border-4 border-black p-4 ${display}`}
+        style={style}
       >
         <DecorativeCorners />
-        {children}
+        <div className={childrenClasses}>{children}</div>
       </div>
     </>
   );
