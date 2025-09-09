@@ -225,13 +225,6 @@ export function performTurn(
         // emit HP event only if changed to avoid redundant bars
         if (hpGain !== 0) {
           events.push({ type: "hp", payload: { target: "player", value: player.hp } });
-      if (eff > 1.01) {
-        events.push({ type: "message", payload: `It's super effective!` });
-      } else if (eff > 0 && eff < 0.99) {
-        events.push({ type: "message", payload: `It's not very effective...` });
-      } else if (eff === 0) {
-        events.push({ type: "message", payload: `It had no effect...` });
-      }
         }
       }
     } else {

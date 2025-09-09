@@ -142,27 +142,20 @@ function MobileControls() {
   const repeatTimeout = useRef<number | null>(null);
   const repeatInterval = useRef<number | null>(null);
   function fire(key: string) {
+    // Always bubble up to React's document-level key handlers; works more reliably on iOS Safari.
     const evt = new KeyboardEvent("keydown", {
       key,
       bubbles: true,
       cancelable: true,
     });
-    // Prefer registered input target (overlays register themselves)
-    let target: EventTarget | null = getKeyTarget();
-    if (!target) {
-      // Fallback to the focused element
-      target = document.activeElement;
-    }
-    // If focus is on body or on our controls, fallback to window so battlefield handlers run.
-    const el = target as HTMLElement | null;
-    if (!el || el.tagName === "BODY") {
-      target = window;
-    }
+    // Try dispatching on the registered target first (if any), then also on document.
+    const target = (getKeyTarget() as HTMLElement | null) || (document.activeElement as HTMLElement | null);
     try {
-      (target as any).dispatchEvent(evt);
-    } catch {
-      window.dispatchEvent(evt);
-    }
+      if (target && target !== document.body) target.dispatchEvent(evt);
+    } catch {/* ignore */}
+    try {
+      document.dispatchEvent(evt);
+    } catch {/* ignore */}
   }
   function clearRepeat() {
     if (repeatTimeout.current != null) {

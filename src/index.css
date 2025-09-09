@@ -138,3 +138,11 @@ body {
   from { transform: translateY(0); opacity: 1; }
   to   { transform: translateY(16px); opacity: 0; }
 }
+
+
+/* Fade-to-black overlay used between battlefield and final scene */
+@keyframes fade-to-black-kf {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.fade-to-black { animation: fade-to-black-kf 360ms ease-in both; }
