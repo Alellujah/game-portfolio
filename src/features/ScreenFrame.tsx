@@ -105,7 +105,7 @@ function ScreenFrame({
                 width: SCREEN_W,
                 height: SCREEN_H,
                 transform: `scale(${scale})`,
-                transformOrigin: "top center",
+                transformOrigin: "top left",
               }}
             >
               {children}
@@ -167,20 +167,27 @@ function MobileControls() {
     clearRepeat();
     fire(key);
     repeatTimeout.current = window.setTimeout(() => {
-      repeatInterval.current = window.setInterval(() => fire(key), 140) as unknown as number;
+      repeatInterval.current = window.setInterval(
+        () => fire(key),
+        140
+      ) as unknown as number;
     }, 280) as unknown as number;
   }
 
-  const btnBase = "active:scale-95 transition-transform select-none touch-manipulation";
-  const btnRound = "rounded-full w-14 h-14 grid place-items-center text-white font-bold shadow-md";
-  const padBtn = "rounded-md w-12 h-12 grid place-items-center text-white font-bold shadow-md";
+  const btnBase =
+    "active:scale-95 transition-transform select-none touch-manipulation";
+  const btnRound =
+    "rounded-full w-14 h-14 grid place-items-center text-white font-bold shadow-md";
+  const padBtn =
+    "rounded-md w-12 h-12 grid place-items-center text-white font-bold shadow-md";
 
   return (
     <div className="md:hidden mt-5 w-full max-w-xl px-6 flex items-center justify-between">
       {/* D-Pad */}
       <div className="grid grid-cols-3 gap-2">
         <div />
-        <button tabIndex={-1}
+        <button
+          tabIndex={-1}
           aria-label="Up"
           className={`${padBtn} ${btnBase}`}
           style={{ background: "#3b3b3b" }}
@@ -195,7 +202,8 @@ function MobileControls() {
           ▲
         </button>
         <div />
-        <button tabIndex={-1}
+        <button
+          tabIndex={-1}
           aria-label="Left"
           className={`${padBtn} ${btnBase}`}
           style={{ background: "#3b3b3b" }}
@@ -210,7 +218,8 @@ function MobileControls() {
           ◀
         </button>
         <div />
-        <button tabIndex={-1}
+        <button
+          tabIndex={-1}
           aria-label="Right"
           className={`${padBtn} ${btnBase}`}
           style={{ background: "#3b3b3b" }}
@@ -225,7 +234,8 @@ function MobileControls() {
           ▶
         </button>
         <div />
-        <button tabIndex={-1}
+        <button
+          tabIndex={-1}
           aria-label="Down"
           className={`${padBtn} ${btnBase}`}
           style={{ background: "#3b3b3b" }}
@@ -244,7 +254,8 @@ function MobileControls() {
 
       {/* A/B buttons */}
       <div className="flex gap-4">
-        <button tabIndex={-1}
+        <button
+          tabIndex={-1}
           aria-label="B (Cancel)"
           className={`${btnRound} ${btnBase}`}
           style={{ background: "#6b5d66" }}
@@ -255,7 +266,8 @@ function MobileControls() {
         >
           B
         </button>
-        <button tabIndex={-1}
+        <button
+          tabIndex={-1}
           aria-label="A (Confirm)"
           className={`${btnRound} ${btnBase}`}
           style={{ background: "#9a2c2c" }}
