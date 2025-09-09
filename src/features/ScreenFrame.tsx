@@ -3,6 +3,8 @@ import type { PropsWithChildren } from "react";
 type Props = PropsWithChildren<{
   // Adds faint CRT-style scanlines over the screen
   scanlines?: boolean;
+  // Opacity for scanlines overlay (0..1)
+  scanlineOpacity?: number;
   // Optional caption centered on the bottom bezel
   label?: string;
 }>;
@@ -21,10 +23,11 @@ type Props = PropsWithChildren<{
 function ScreenFrame({
   children,
   scanlines = true,
+  scanlineOpacity = 0.65,
   label = "GAME BOY",
 }: Props) {
   return (
-    <div className="w-full py-6 flex justify-center">
+    <div className="w-full min-h-screen snes-bg py-8 flex justify-center items-start">
       {/* Console shell */}
       <div
         className="relative inline-block rounded-[18px] shadow-md"
@@ -79,14 +82,20 @@ function ScreenFrame({
           <div className="relative rounded-lg overflow-hidden bg-black">
             {children}
             {scanlines && (
-              <div className="scanlines pointer-events-none absolute inset-0 mix-blend-soft-light opacity-40" />
+              <div
+                className="scanlines pointer-events-none absolute inset-0 mix-blend-soft-light"
+                style={{ opacity: scanlineOpacity }}
+              />
             )}
+            <div className="screen-vignette pointer-events-none absolute inset-0" />
           </div>
 
           {/* Bottom label */}
           {label && (
             <div className="text-center select-none">
-              <span className="text-xstracking-widest text-white">{label}</span>
+              <span className="text-xs text-white tracking-widest">
+                {label}
+              </span>
             </div>
           )}
         </div>

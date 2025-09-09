@@ -1,6 +1,7 @@
 import "./App.css";
 import MONS, { type Mon } from "./engine/mons";
 import BattleScene from "./features/BattleScene";
+import ScreenFrame from "./features/ScreenFrame";
 
 const enemyMons: Mon[] = [
   { ...MONS["ghostcruiter"], level: 69 },
@@ -18,12 +19,14 @@ const enemySpriteUrl = "/players/developer-front.png";
 
 function App() {
   return (
-    <BattleScene
-      playerSpriteUrl={playerSpriteUrl}
-      enemySpriteUrl={enemySpriteUrl}
-      playerMons={playerMons}
-      enemyMons={enemyMons}
-    />
+    <ScreenFrame scanlines={true} label="FabioBoy">
+      <BattleScene
+        playerSpriteUrl={playerSpriteUrl}
+        enemySpriteUrl={enemySpriteUrl}
+        playerMons={playerMons}
+        enemyMons={enemyMons}
+      />
+    </ScreenFrame>
   );
 }
 

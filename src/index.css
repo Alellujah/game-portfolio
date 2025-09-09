@@ -107,11 +107,27 @@ body {
 
 /* Subtle CRT scanlines overlay for ScreenFrame */
 .scanlines {
+  /* Slightly stronger, denser pattern for better visibility */
   background: repeating-linear-gradient(
     to bottom,
-    rgba(255, 255, 255, 0.05) 0px,
-    rgba(255, 255, 255, 0.05) 1px,
-    rgba(0, 0, 0, 0.0) 2px,
-    rgba(0, 0, 0, 0.0) 3px
+    rgba(255, 255, 255, 0.10) 0px,
+    rgba(255, 255, 255, 0.10) 1px,
+    rgba(0, 0, 0, 0.12) 1px,
+    rgba(0, 0, 0, 0.12) 2px,
+    transparent 2px,
+    transparent 4px
   );
+}
+
+/* Screen vignette for depth */
+.screen-vignette {
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.25) 100%);
+}
+
+/* Subtle SNES-like dotted gray background */
+.snes-bg {
+  background:
+    radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px) 0 0 / 8px 8px,
+    radial-gradient(rgba(0,0,0,0.04) 1px, transparent 1px) 4px 4px / 8px 8px,
+    linear-gradient(180deg, #9b97a1 0%, #8a8590 100%);
 }
