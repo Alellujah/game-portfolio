@@ -237,7 +237,8 @@ export function performTurn(
           state.player.pendingSwitchIndex = idx;
           events.push({ type: "message", payload: `Come back, ${prev.toUpperCase()}!` });
           // Auto-advance this pause after a short timeout; no user confirm needed here
-          events.push({ type: "pause", payload: "auto" });
+          // Require player to press Enter/click to continue
+          events.push({ type: "pause", payload: "continue" });
           state.turn = "enemy";
           state.log.push(
             ...events.map((e) => (e.type === "message" || e.type === "end" ? e.payload : ""))
@@ -258,7 +259,8 @@ export function performTurn(
       const idx = state.player.party.findIndex((m) => m.name === action.newMon?.name);
       if (idx >= 0) state.player.pendingSwitchIndex = idx;
       events.push({ type: "message", payload: `Come back, ${prev.toUpperCase()}!` });
-      events.push({ type: "pause", payload: "auto" });
+      // Require player to press Enter/click to continue
+          events.push({ type: "pause", payload: "continue" });
       state.turn = "enemy";
       state.log.push(
         ...events.map((e) => (e.type === "message" || e.type === "end" ? e.payload : ""))
@@ -299,7 +301,8 @@ export function performTurn(
         if (nextIdx >= 0) {
           // Announce faint, then add a short auto pause; UI will call enemyStep which will perform the switch
           events.push({ type: "message", payload: `Enemy ${enemy.name.toUpperCase()} fainted!` });
-          events.push({ type: "pause", payload: "auto" });
+          // Require player to press Enter/click to continue
+          events.push({ type: "pause", payload: "continue" });
           state.enemy.pendingSwitchIndex = nextIdx;
           state.turn = "player";
           state.log.push(

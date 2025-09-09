@@ -2,6 +2,7 @@ import { useState } from "react";
 import BattleIntro from "./BattleIntro";
 import Battlefield from "./Battlefield";
 import { type Mon } from "../engine/mons";
+import FinalScene from "./FinalScene";
 import { SCREEN_H, SCREEN_W } from "../config/ui";
 
 interface Props {
@@ -18,6 +19,7 @@ export default function BattleScene({
   playerSpriteUrl,
 }: Props) {
   const [scene, setScene] = useState<"intro" | "field" | "end">("intro");
+  const [result, setResult] = useState<"won" | "lost" | null>(null);
 
   return (
     <div
@@ -41,11 +43,21 @@ export default function BattleScene({
             enemyMon={enemyMons[0]}
             playerParty={playerMons}
             enemyParty={enemyMons}
+            onEnd={(r) => {
+              setResult(r);
+              setScene("end");
+            }}
           />
         </div>
       )}
 
-      {scene === "end" && <></>}
+      {scene === "end" && result && (
+        <FinalScene
+          playerSpriteUrl={playerSpriteUrl}
+          enemySpriteUrl={enemySpriteUrl}
+          result={result}
+        />
+      )}
     </div>
   );
 }

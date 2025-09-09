@@ -11,6 +11,7 @@ import StatusRow from "./battle/StatusRow";
 import FightOverlay from "./battle/FightOverlay";
 
 interface Props {
+  onEnd?: (result: "won" | "lost") => void;
   playerMon: Mon;
   enemyMon: Mon;
   playerParty?: Mon[]; // for CHG menu; includes the active mon
@@ -22,6 +23,7 @@ export default function Battlefield({
   playerMon,
   playerParty,
   enemyParty,
+  onEnd,
 }: Props) {
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
 
@@ -90,6 +92,9 @@ export default function Battlefield({
     for (const e of evts) {
       if (e.type === "message") {
         setOverrideMsg(e.payload);
+        if (typeof e.payload === "string" && e.payload.toUpperCase().startsWith("ENEMY ") && e.payload.toUpperCase().includes("SENDS ")) {
+          setEnemyFaint(false);
+        }
         await wait(Math.round(1000 * SPEED_MULT));
         continue;
       }
@@ -177,10 +182,20 @@ export default function Battlefield({
       }
       if (e.type === "end") {
         setOverrideMsg(e.payload);
-        // decide result from engine.state
-        if (engine.ended === "won") setPhase("won");
-        else if (engine.ended === "lost") setPhase("lost");
+        // Flip to an end phase for exit animations
+        const inferred =
+          typeof e.payload === "string" && e.payload.toLowerCase().includes("lose")
+            ? "lost"
+            : typeof e.payload === "string" && e.payload.toLowerCase().includes("win")
+            ? "won"
+            : null;
+        if (inferred) setPhase(inferred);
         await wait(800);
+        // Fire onEnd robustly even if engine.ended snapshot is stale in this closure
+        if (onEnd) {
+          onEnd((engine.ended as any) || (inferred as any));
+          return;
+        }
       }
     }
     // if battle not ended, return to player's turn and unlock UI
@@ -316,7 +331,7 @@ export default function Battlefield({
     >
       <StatusRow
         side="enemy"
-        show={phase !== "start"}
+        show={phase !== "start" && phase !== "won" && phase !== "lost"}
         hit={enemyHit}
         faint={enemyFaint}
         spriteSize={170}
