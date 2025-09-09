@@ -30,8 +30,8 @@ export default function FinalScene({
 }: Props) {
   const defaultMsgs =
     result === "won"
-      ? ["Enemy fainted!", "You won the battle!"]
-      : ["You fainted...", "Better luck next time!"];
+      ? ["FÁBIO is out of usable mons!", "You won the battle! Caralho!"]
+      : ["You are out of usable mons...", "You withed away!"];
   const msgs = messages && messages.length ? messages : defaultMsgs;
   const [idx, setIdx] = useState(0);
   const [show, setShow] = useState(false);

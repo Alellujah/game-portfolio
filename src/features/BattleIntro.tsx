@@ -26,7 +26,11 @@ function BattleIntro({
   const [showMessage, setShowMessage] = useState(false);
   const [exiting, setExiting] = useState(false);
 
-  const fallbackMessages = ["FABIO wants to battle!", "aaa"];
+  const fallbackMessages = [
+    "FABIO wants to battle!",
+    "fIcOu EnCrAvAdO aQuI",
+    "Burro",
+  ];
   const msgs = messages && messages.length > 0 ? messages : fallbackMessages;
   const [msgIndex, setMsgIndex] = useState(0);
 
