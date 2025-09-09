@@ -1,5 +1,6 @@
 import Container from "../../components/layout/Container";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { setKeyTarget, getKeyTarget } from "../../utils/inputTarget";
 import type { ItemKey } from "../../engine/game";
 
 const ITEMS: { key: ItemKey; name: string; desc: string }[] = [
@@ -28,6 +29,11 @@ export default function ItemsOverlay({
   const ref = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     ref.current?.focus();
+    setKeyTarget(ref.current);
+    return () => {
+      // Only clear if we were the active target
+      if (getKeyTarget() === ref.current) setKeyTarget(null);
+    };
   }, []);
 
   return (

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type PropsWithChildren } from "react";
 import { SCREEN_W, SCREEN_H } from "../config/ui";
+import { getKeyTarget } from "../utils/inputTarget";
 
 type Props = PropsWithChildren<{
   // Adds faint CRT-style scanlines over the screen
@@ -146,8 +147,12 @@ function MobileControls() {
       bubbles: true,
       cancelable: true,
     });
-    // Prefer the focused element (overlay/menu containers set focus on mount).
-    let target: EventTarget | null = document.activeElement;
+    // Prefer registered input target (overlays register themselves)
+    let target: EventTarget | null = getKeyTarget();
+    if (!target) {
+      // Fallback to the focused element
+      target = document.activeElement;
+    }
     // If focus is on body or on our controls, fallback to window so battlefield handlers run.
     const el = target as HTMLElement | null;
     if (!el || el.tagName === "BODY") {
@@ -186,6 +191,24 @@ function MobileControls() {
     "rounded-full w-14 h-14 grid place-items-center text-white font-bold shadow-md";
   const padBtn =
     "rounded-md w-12 h-12 grid place-items-center text-white font-bold shadow-md";
+
+  // Global safety: clear repeat on any global pointer/touch release or tab visibility change
+  useEffect(() => {
+    const clear = () => clearRepeat();
+    const onVis = () => {
+      if (document.hidden) clearRepeat();
+    };
+    window.addEventListener("pointerup", clear);
+    window.addEventListener("touchend", clear);
+    window.addEventListener("blur", clear);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("pointerup", clear);
+      window.removeEventListener("touchend", clear);
+      window.removeEventListener("blur", clear);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, []);
 
   return (
     <div

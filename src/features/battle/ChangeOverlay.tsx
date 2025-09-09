@@ -1,5 +1,6 @@
 import Container from "../../components/layout/Container";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { setKeyTarget, getKeyTarget } from "../../utils/inputTarget";
 import type { Mon as EngineMon } from "../../engine/game";
 
 export type ChangeOverlayProps = {
@@ -19,6 +20,10 @@ export default function ChangeOverlay({
   const ref = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     ref.current?.focus();
+    setKeyTarget(ref.current);
+    return () => {
+      if (getKeyTarget() === ref.current) setKeyTarget(null);
+    };
   }, []);
   const idx = useMemo(
     () => Math.max(0, Math.min(index, party.length - 1)),

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { setKeyTarget, getKeyTarget } from "../../utils/inputTarget";
 import Container from "../layout/Container";
 
 export interface Skill {
@@ -53,6 +54,10 @@ function FightMenu({ skills, onSelect }: FightMenuProps) {
 
   useEffect(() => {
     containerRef.current?.focus();
+    if (containerRef.current) setKeyTarget(containerRef.current);
+    return () => {
+      if (getKeyTarget() === containerRef.current) setKeyTarget(null);
+    };
   }, []);
 
   return (
