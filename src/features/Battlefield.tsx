@@ -36,10 +36,12 @@ export default function Battlefield({
     attack: (m as any).attack ?? 50,
     defense: (m as any).defense ?? 50,
     speed: (m as any).speed ?? 50,
+    type: (m as any).type ?? "NORMAL",
     moves: (m.moves || []).map((mv: any) => ({
       name: mv.name,
       power: mv.power ?? 10,
       accuracy: mv.accuracy ?? 95,
+      type: mv.type ?? "NORMAL",
       pp: mv.pp ?? 10,
       maxPP: mv.maxPP ?? mv.pp ?? 10,
     })),

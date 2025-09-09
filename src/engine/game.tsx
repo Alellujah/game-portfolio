@@ -43,6 +43,7 @@ export interface Mon {
   attack: number;
   defense: number;
   speed: number;
+  type?: string; // basic typing for effectiveness (e.g., ELECTRIC, WATER)
   moves: Move[];
 }
 
@@ -50,11 +51,34 @@ export interface Move {
   name: string;
   power: number;
   accuracy: number;
-  type?: string;
+  type?: string; // e.g., ELECTRIC, WATER
   pp: number; // current PP
   maxPP: number; // maximum PP
 }
 
+
+// --- Very simple type chart (subset) ---
+// attackerType -> defenderType -> multiplier
+const TYPE_CHART: Record<string, Record<string, number>> = {
+  ELECTRIC: { WATER: 2, FLYING: 2, GRASS: 0.5, ELECTRIC: 0.5, DRAGON: 0.5 },
+  WATER: { FIRE: 2, ROCK: 2, GROUND: 2, WATER: 0.5, GRASS: 0.5, DRAGON: 0.5 },
+  FIRE: { GRASS: 2, BUG: 2, STEEL: 2, WATER: 0.5, ROCK: 0.5, DRAGON: 0.5 },
+  GRASS: { WATER: 2, ROCK: 2, GROUND: 2, FIRE: 0.5, FLYING: 0.5, BUG: 0.5, DRAGON: 0.5 },
+  FIGHTING: { STEEL: 2, NORMAL: 2, FLYING: 0.5, BUG: 0.5, PSYCHIC: 0.5, GHOST: 0 },
+  PSYCHIC: { FIGHTING: 2, POISON: 2, STEEL: 0.5, PSYCHIC: 0.5, DARK: 0 },
+  BUG: { GRASS: 2, PSYCHIC: 2, FIGHTING: 0.5, FIRE: 0.5, FLYING: 0.5 },
+  FLYING: { GRASS: 2, FIGHTING: 2, BUG: 2, ELECTRIC: 0.5, ROCK: 0.5, STEEL: 0.5 },
+  GHOST: { GHOST: 2, NORMAL: 0 },
+  STEEL: { ROCK: 2, ICE: 2, STEEL: 0.5, WATER: 0.5, ELECTRIC: 0.5 },
+};
+
+function effectiveness(moveType?: string, targetType?: string): number {
+  if (!moveType || !targetType) return 1;
+  const atk = TYPE_CHART[moveType.toUpperCase()];
+  if (!atk) return 1;
+  const mult = atk[targetType.toUpperCase()];
+  return mult != null ? mult : 1;
+}
 export interface BattleState {
   player: { active: Mon; party: Mon[]; pendingSwitchIndex?: number };
   enemy: { active: Mon; party: Mon[]; pendingSwitchIndex?: number };
@@ -201,6 +225,13 @@ export function performTurn(
         // emit HP event only if changed to avoid redundant bars
         if (hpGain !== 0) {
           events.push({ type: "hp", payload: { target: "player", value: player.hp } });
+      if (eff > 1.01) {
+        events.push({ type: "message", payload: `It's super effective!` });
+      } else if (eff > 0 && eff < 0.99) {
+        events.push({ type: "message", payload: `It's not very effective...` });
+      } else if (eff === 0) {
+        events.push({ type: "message", payload: `It had no effect...` });
+      }
         }
       }
     } else {
@@ -278,12 +309,14 @@ export function performTurn(
     } else if (rng() <= (move.accuracy ?? 100) / 100) {
       // consume PP
       move.pp = clamp(move.pp - 1, 0, move.maxPP);
-      const dmg = calculateDamage(
+      // Apply simple type effectiveness
+      const eff = effectiveness(move.type, enemy.type);
+      const dmg = Math.max(1, Math.floor(calculateDamage(
         player.level,
         player.attack,
         enemy.defense,
         move.power
-      );
+      ) * eff));
       enemy.hp = Math.max(0, enemy.hp - dmg);
       events.push({
         type: "message",
@@ -293,6 +326,13 @@ export function performTurn(
         type: "hp",
         payload: { target: "enemy", value: enemy.hp },
       });
+      if (eff > 1.01) {
+        events.push({ type: "message", payload: `It's super effective!` });
+      } else if (eff > 0 && eff < 0.99) {
+        events.push({ type: "message", payload: `It's not very effective...` });
+      } else if (eff === 0) {
+        events.push({ type: "message", payload: `It had no effect...` });
+      }
       if (enemy.hp <= 0) {
         // If there is another enemy mon available, schedule a switch via pending index
         const nextIdx = state.enemy.party.findIndex(
@@ -443,18 +483,26 @@ export function enemyStep(state: BattleState, rng: RNG = defaultRng): Event[] {
       });
     } else if (rng() <= (move.accuracy ?? 100) / 100) {
       move.pp = clamp(move.pp - 1, 0, move.maxPP);
-      const dmg = calculateDamage(
+      const eff = effectiveness(move.type, player.type);
+      const dmg = Math.max(1, Math.floor(calculateDamage(
         enemy.level,
         enemy.attack,
         player.defense,
         move.power
-      );
+      ) * eff));
       player.hp = Math.max(0, player.hp - dmg);
       events.push({
         type: "message",
         payload: `Enemy ${enemy.name.toUpperCase()} used ${move.name.toUpperCase()}!`,
       });
       events.push({ type: "hp", payload: { target: "player", value: player.hp } });
+      if (eff > 1.01) {
+        events.push({ type: "message", payload: `It's super effective!` });
+      } else if (eff > 0 && eff < 0.99) {
+        events.push({ type: "message", payload: `It's not very effective...` });
+      } else if (eff === 0) {
+        events.push({ type: "message", payload: `It had no effect...` });
+      }
       if (player.hp <= 0) {
         // If there is another mon available, force a switch instead of ending
         const hasAnother = state.player.party.some((m) => m.hp > 0 && m.name !== player.name);
