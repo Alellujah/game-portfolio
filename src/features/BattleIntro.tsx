@@ -112,23 +112,22 @@ function BattleIntro({
         </div>
       </div>
 
-      {/* Message appears after sprites enter */}
+      {/* Message pane (present from the start) */}
       <div className="relative">
         <div className="grid grid-cols-3 gap-4 items-stretch">
           <div
             className={`col-span-3 transition-all duration-300 ease-out ${
               exiting
                 ? "opacity-0 translate-y-1 scale-95 pointer-events-none"
-                : showMessage
-                ? "opacity-100 translate-y-0 scale-100"
-                : "opacity-0 translate-y-1 scale-95 pointer-events-none"
+                : "opacity-100 translate-y-0 scale-100"
             }`}
           >
             <BattleMessages
               autoPageDelay={2000}
-              speed={30}
-              message={fallbackMessages[0]}
-              className="w-full h-[88px]"
+              speed={24}
+              charsPerTick={14}
+              message={msgs[msgIndex]}
+              className="w-full h-[104px]"
               waiting={showMessage && !exiting}
             />
           </div>

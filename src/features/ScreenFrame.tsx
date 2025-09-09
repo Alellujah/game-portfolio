@@ -213,11 +213,11 @@ function MobileControls() {
   return (
     <div
       id="mobile-controls"
-      className="md:hidden mt-5 w-full max-w-xl px-6 flex items-center justify-between"
+      className="mt-5 w-full max-w-xl px-6 flex items-center justify-between"
       onContextMenu={(e) => e.preventDefault()}
     >
       {/* D-Pad */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-3">
         <div />
         <div
           role="button"

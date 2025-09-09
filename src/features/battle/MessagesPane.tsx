@@ -29,6 +29,7 @@ function MessagesPane({
       waiting={waiting}
       /* slightly faster typing and longer dwell */
       speed={24}
+      charsPerTick={14}
       autoPageDelay={1400}
     />
   );

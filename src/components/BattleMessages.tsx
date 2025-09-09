@@ -8,6 +8,7 @@ type Props = {
   className?: string;
   waiting?: boolean; // show blinking dots when awaiting user input
   autoPageDelay?: number; // ms to wait before auto-advancing a full page
+  charsPerTick?: number; // characters to reveal per tick
 };
 
 function BattleMessages({
@@ -16,6 +17,7 @@ function BattleMessages({
   className = "",
   waiting = false,
   autoPageDelay = 1000,
+  charsPerTick = 10,
 }: Props) {
   const [displayed, setDisplayed] = useState("");
   const [pages, setPages] = useState<string[]>([]);
@@ -40,14 +42,22 @@ function BattleMessages({
     clearTyping();
     setDisplayed("");
     if (!pageText) return;
+    // Render instantly if speed <= 0
+    if (speed <= 0) {
+      setDisplayed(pageText);
+      setLocalWaiting(pageIdx < pages.length - 1);
+      return;
+    }
     let i = 0;
+    const step = Math.max(1, Math.floor(charsPerTick));
     intervalRef.current = window.setInterval(() => {
-      i++;
-      setDisplayed(pageText.slice(0, i));
+      i += step;
       if (i >= pageText.length) {
+        setDisplayed(pageText);
         clearTyping();
-        // If there are more pages, wait for Enter/click to continue
         setLocalWaiting(pageIdx < pages.length - 1);
+      } else {
+        setDisplayed(pageText.slice(0, i));
       }
     }, speed) as unknown as number;
   };
@@ -79,6 +89,16 @@ function BattleMessages({
       setLocalWaiting(false);
       return;
     }
+    // If the whole text fits, avoid pagination entirely
+    measure.textContent = full;
+    if (measure.scrollHeight <= maxH) {
+      setPages([full]);
+      setPageIdx(0);
+      setDisplayed("");
+      setLocalWaiting(false);
+      return;
+    }
+
     const out: string[] = [];
     let start = 0;
     const N = full.length;
@@ -186,11 +206,15 @@ function BattleMessages({
     };
   }, [localWaiting, pages.length, autoPageDelay]);
 
-  const textClasses = "text-black text-s whitespace-pre-wrap break-normal";
+  const textClasses = "m-0 text-black text-xs whitespace-pre-wrap break-normal";
 
   return (
-    <Container fixedWidth className={className}>
-      <div ref={boxRef} className="h-full w-full overflow-hidden relative">
+    <Container
+      fixedWidth
+      className={className}
+      childrenClasses="absolute inset-0"
+    >
+      <div ref={boxRef} className="absolute inset-0 overflow-hidden p-5">
         <p className={textClasses}>
           {displayed}
           {(waiting || localWaiting) && (
