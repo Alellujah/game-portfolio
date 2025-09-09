@@ -15,6 +15,7 @@ export type UseBattleEngineOptions = {
   enemy: Mon;
   rng?: RNG;
   playerParty?: Mon[];
+  enemyParty?: Mon[];
 };
 
 export type UseBattleEngine = {
@@ -62,7 +63,8 @@ export default function useBattleEngine(
     createBattle(
       structuredClone(opts.player),
       structuredClone(opts.enemy),
-      opts.playerParty ? structuredClone(opts.playerParty) : undefined
+      opts.playerParty ? structuredClone(opts.playerParty) : undefined,
+      opts.enemyParty ? structuredClone(opts.enemyParty) : undefined
     )
   );
 
@@ -138,7 +140,8 @@ export default function useBattleEngine(
     stateRef.current = createBattle(
       structuredClone(opts.player),
       structuredClone(opts.enemy),
-      opts.playerParty ? structuredClone(opts.playerParty) : undefined
+      opts.playerParty ? structuredClone(opts.playerParty) : undefined,
+      opts.enemyParty ? structuredClone(opts.enemyParty) : undefined
     );
     setLastEvents([]);
     sync();

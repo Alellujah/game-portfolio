@@ -57,7 +57,7 @@ export interface Move {
 
 export interface BattleState {
   player: { active: Mon; party: Mon[]; pendingSwitchIndex?: number };
-  enemy: { active: Mon };
+  enemy: { active: Mon; party: Mon[]; pendingSwitchIndex?: number };
   turn: "player" | "enemy";
   ended?: "won" | "lost";
   log: string[];
@@ -81,13 +81,21 @@ export type RNG = () => number;
 export const defaultRng: RNG = () => Math.random();
 
 /** create a fresh battle */
-export function createBattle(player: Mon, enemy: Mon, playerParty?: Mon[]): BattleState {
+export function createBattle(
+  player: Mon,
+  enemy: Mon,
+  playerParty?: Mon[],
+  enemyParty?: Mon[]
+): BattleState {
   const party = (playerParty && playerParty.length ? playerParty : [player]).slice();
   // ensure the active is a reference from the party array (so HP/PP persist)
   const active = party.find((m) => m.name === player.name) ?? party[0];
+  // Enemy party support
+  const eParty = (enemyParty && enemyParty.length ? enemyParty : [enemy]).slice();
+  const eActive = eParty.find((m) => m.name === enemy.name) ?? eParty[0];
   return {
     player: { active, party },
-    enemy: { active: enemy },
+    enemy: { active: eActive, party: eParty },
     turn: "player",
     log: [],
     inventory: { coffee: 2, beer: 2, cigarette: 3, "7days": 1 },
@@ -284,9 +292,25 @@ export function performTurn(
         payload: { target: "enemy", value: enemy.hp },
       });
       if (enemy.hp <= 0) {
-        state.ended = "won";
-        events.push({ type: "end", payload: "Enemy fainted! You win!" });
-        return events;
+        // If there is another enemy mon available, schedule a switch via pending index
+        const nextIdx = state.enemy.party.findIndex(
+          (m) => m.hp > 0 && m.name !== enemy.name
+        );
+        if (nextIdx >= 0) {
+          // Announce faint, then add a short auto pause; UI will call enemyStep which will perform the switch
+          events.push({ type: "message", payload: `Enemy ${enemy.name.toUpperCase()} fainted!` });
+          events.push({ type: "pause", payload: "auto" });
+          state.enemy.pendingSwitchIndex = nextIdx;
+          state.turn = "player";
+          state.log.push(
+            ...events.map((e) => (e.type === "message" || e.type === "end" ? e.payload : ""))
+          );
+          return events;
+        } else {
+          state.ended = "won";
+          events.push({ type: "end", payload: "Enemy fainted! You win!" });
+          return events;
+        }
       }
     } else {
       events.push({
@@ -326,11 +350,24 @@ export function performTurn(
           payload: { target: "player", value: player.hp },
         });
         if (player.hp <= 0) {
-          state.ended = "lost";
-          events.push({
-            type: "end",
-            payload: `Player ${player.name.toUpperCase()} fainted! You lose!`,
-          });
+          // If player has another healthy mon, force a change instead of ending
+          const hasAnother = state.player.party.some(
+            (m) => m.hp > 0 && m.name !== player.name
+          );
+          if (hasAnother) {
+            events.push({
+              type: "message",
+              payload: `Player ${player.name.toUpperCase()} fainted!`,
+            });
+            events.push({ type: "forceChange", payload: true });
+            state.turn = "player";
+          } else {
+            state.ended = "lost";
+            events.push({
+              type: "end",
+              payload: `Player ${player.name.toUpperCase()} fainted! You lose!`,
+            });
+          }
         }
       } else {
         events.push({
@@ -366,6 +403,26 @@ export function enemyStep(state: BattleState, rng: RNG = defaultRng): Event[] {
       events.push({ type: "hp", payload: { target: "player", value: state.player.active.hp, reason: "switch" } });
       // Pause here so user confirms after seeing GO message; enemy acts on next step
       events.push({ type: "pause", payload: "continue" });
+      return events;
+    }
+  }
+  // If there is a pending switch from the enemy (scheduled after faint), apply it now
+  if (state.enemy.pendingSwitchIndex != null) {
+    const idx = state.enemy.pendingSwitchIndex;
+    state.enemy.pendingSwitchIndex = undefined;
+    const candidate = state.enemy.party[idx];
+    if (candidate) {
+      state.enemy.active = candidate;
+      events.push({
+        type: "message",
+        payload: `Enemy sends ${candidate.name.toUpperCase()}!`,
+      });
+      // Sync UI HP to new active before any subsequent action
+      events.push({
+        type: "hp",
+        payload: { target: "enemy", value: state.enemy.active.hp, reason: "switch" },
+      });
+      // No enemy action this step; return so UI shows message and waits
       return events;
     }
   }

@@ -40,6 +40,7 @@ export default function BattleScene({
             playerMon={playerMons[0]}
             enemyMon={enemyMons[0]}
             playerParty={playerMons}
+            enemyParty={enemyMons}
           />
         </div>
       )}

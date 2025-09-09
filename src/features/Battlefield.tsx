@@ -14,12 +14,14 @@ interface Props {
   playerMon: Mon;
   enemyMon: Mon;
   playerParty?: Mon[]; // for CHG menu; includes the active mon
+  enemyParty?: Mon[]; // for enemy replacement when they faint
 }
 
 export default function Battlefield({
   enemyMon,
   playerMon,
   playerParty,
+  enemyParty,
 }: Props) {
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
 
@@ -45,6 +47,7 @@ export default function Battlefield({
     player: toEngineMon(playerMon),
     enemy: toEngineMon(enemyMon),
     playerParty: (playerParty ?? [playerMon]).map(toEngineMon),
+    enemyParty: (enemyParty ?? [enemyMon]).map(toEngineMon),
   });
 
   // Convenience aliases for rendering
@@ -78,6 +81,7 @@ export default function Battlefield({
   const [waiting, setWaiting] = useState(false);
   const [forceChange, setForceChange] = useState(false);
   const [hpInstant, setHpInstant] = useState(false);
+  const [enemyFaint, setEnemyFaint] = useState(false);
 
   // Play a batch of engine events with timing + small sprite feedback
   async function playEvents(evts: any[]) {
@@ -91,10 +95,20 @@ export default function Battlefield({
       }
       if (e.type === "hp") {
         if (e.payload.target === "enemy") {
+          // Handle instant sync when switching enemy
+          if ((e as any).payload?.reason === "switch") {
+            enemyHp.reset((e as any).payload.value as number);
+            setEnemyFaint(false);
+            continue;
+          }
           setEnemyHit(true);
           const durE = enemyHp.to(e.payload.value as number);
           await wait(durE + Math.round(120 * SPEED_MULT));
           setEnemyHit(false);
+          if ((e.payload.value as number) <= 0) {
+            // Trigger faint animation; next step will bring a new mon
+            setEnemyFaint(true);
+          }
         } else if (e.payload.target === "player") {
           if ((e as any).payload?.reason === "switch") {
             playerHp.reset((e as any).payload.value as number);
@@ -157,6 +171,7 @@ export default function Battlefield({
       if (e.type === "forceChange") {
         // Open change overlay immediately; do not continue processing this batch
         setForceChange(true);
+        setSelectedAction(null); // ensure regular CHG overlay is closed
         setLockUI(false); // allow interacting with overlay
         return;
       }
@@ -172,6 +187,8 @@ export default function Battlefield({
     if (!engine.ended) {
       setPhase("playerTurn");
       setOverrideMsg(null); // fallback to prompt on your turn
+      // Ensure any transient selection (like CHG) is cleared even if phase didn't change
+      setSelectedAction(null);
     }
     setLockUI(false);
   }
@@ -277,10 +294,12 @@ export default function Battlefield({
     if (lastMsg) setOverrideMsg(lastMsg.payload);
   }, [engine.lastEvents, phase, lockUI]);
 
-  // Derive current player's sprite/back URL from the UI party by matching name
+  // Derive current player's and enemy's sprite URLs by matching names to UI parties
   const uiParty = playerParty ?? [playerMon];
-  const activeUiMon =
-    uiParty.find((m) => m.name === engPlayer.name) ?? playerMon;
+  const activeUiMon = uiParty.find((m) => m.name === engPlayer.name) ?? playerMon;
+  const uiEnemyParty = enemyParty ?? [enemyMon];
+  const activeUiEnemy =
+    uiEnemyParty.find((m) => m.name === engEnemy.name) ?? enemyMon;
 
   return (
     <div
@@ -299,11 +318,12 @@ export default function Battlefield({
         side="enemy"
         show={phase !== "start"}
         hit={enemyHit}
+        faint={enemyFaint}
         spriteSize={170}
-        spriteUrl={enemyMon.spriteFrontUrl}
+        spriteUrl={activeUiEnemy.spriteFrontUrl}
         status={{
-          name: enemyMon.name,
-          level: enemyMon.level ?? 1,
+          name: engEnemy.name,
+          level: engEnemy.level ?? enemyMon.level ?? 1,
           hp: engEnemy.maxHp,
           actualHp: enemyHp.disp,
         }}

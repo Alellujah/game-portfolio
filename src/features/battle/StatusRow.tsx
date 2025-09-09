@@ -6,6 +6,7 @@ export type StatusRowProps = {
   side: "enemy" | "player";
   show: boolean;
   hit?: boolean;
+  faint?: boolean;
   spriteUrl: string;
   status: { name: string; level: number; hp: number; actualHp: number };
   spriteSize?: number; // optional, defaults to 132
@@ -17,6 +18,7 @@ function StatusRow({
   side,
   show,
   hit,
+  faint,
   spriteUrl,
   status,
   spriteSize,
@@ -46,7 +48,7 @@ function StatusRow({
           <div
             className={`col-span-2 flex justify-center items-center gap-2 transition-all duration-500 ${
               show ? "opacity-100 scale-100" : "opacity-0 scale-95"
-            } ${hit ? "animate-hit" : ""}`}
+            } ${hit ? "animate-hit" : ""} ${faint ? "faint-down" : ""}`}
           >
             <AnimatedSwitchSprite
               side="enemy"
@@ -62,7 +64,7 @@ function StatusRow({
           <div
             className={`col-span-2 h-[124px] relative gap-2 transition-all duration-500 ${
               show ? "opacity-100 translate-x-0" : "opacity-0 translate-x-6"
-            } ${hit ? "animate-hit" : ""}`}
+            } ${hit ? "animate-hit" : ""} ${faint ? "faint-down" : ""}`}
           >
             {extra}
             <AnimatedSwitchSprite

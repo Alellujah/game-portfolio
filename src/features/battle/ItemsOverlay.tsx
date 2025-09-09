@@ -46,6 +46,7 @@ export default function ItemsOverlay({
       <button
         className="absolute inset-0 bg-black/40 z-0"
         aria-label="Close items"
+        tabIndex={-1}
         onClick={onCancel}
       />
       <div className="absolute inset-0 grid place-items-center z-10 px-4">
@@ -58,12 +59,22 @@ export default function ItemsOverlay({
             tabIndex={0}
             className="outline-none p-2"
             onKeyDown={(e) => {
-              if (e.key === "ArrowUp")
+              if (e.key === "ArrowUp") {
+                e.preventDefault();
                 setIndex((i) => (i - 1 + ITEMS.length) % ITEMS.length);
-              if (e.key === "ArrowDown")
+              }
+              if (e.key === "ArrowDown") {
+                e.preventDefault();
                 setIndex((i) => (i + 1) % ITEMS.length);
-              if (e.key === "Enter" || e.key === " ") onSelect(ITEMS[idx].key);
-              if (e.key === "Escape") onSelect(null);
+              }
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelect(ITEMS[idx].key);
+              }
+              if (e.key === "Escape") {
+                e.preventDefault();
+                onSelect(null);
+              }
             }}
           >
             <div className="text-black text-sm mb-2">Select an item:</div>
