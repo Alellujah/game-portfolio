@@ -19,14 +19,16 @@ const enemySpriteUrl = "/players/developer-front.png";
 
 function App() {
   return (
-    <ScreenFrame scanlines={true} label="FabioBoy">
-      <BattleScene
-        playerSpriteUrl={playerSpriteUrl}
-        enemySpriteUrl={enemySpriteUrl}
-        playerMons={playerMons}
-        enemyMons={enemyMons}
-      />
-    </ScreenFrame>
+    <>
+      <ScreenFrame scanlines={true} label="FabioBoy">
+        <BattleScene
+          playerSpriteUrl={playerSpriteUrl}
+          enemySpriteUrl={enemySpriteUrl}
+          playerMons={playerMons}
+          enemyMons={enemyMons}
+        />
+      </ScreenFrame>
+    </>
   );
 }
 
