@@ -146,9 +146,15 @@ function MobileControls() {
       bubbles: true,
       cancelable: true,
     });
-    const target = (document.activeElement as HTMLElement) ?? document.body;
+    // Prefer the focused element (overlay/menu containers set focus on mount).
+    let target: EventTarget | null = document.activeElement;
+    // If focus is on body or on our controls, fallback to window so battlefield handlers run.
+    const el = target as HTMLElement | null;
+    if (!el || el.tagName === "BODY") {
+      target = window;
+    }
     try {
-      target.dispatchEvent(evt);
+      (target as any).dispatchEvent(evt);
     } catch {
       window.dispatchEvent(evt);
     }
@@ -182,12 +188,16 @@ function MobileControls() {
     "rounded-md w-12 h-12 grid place-items-center text-white font-bold shadow-md";
 
   return (
-    <div className="md:hidden mt-5 w-full max-w-xl px-6 flex items-center justify-between">
+    <div
+      id="mobile-controls"
+      className="md:hidden mt-5 w-full max-w-xl px-6 flex items-center justify-between"
+      onContextMenu={(e) => e.preventDefault()}
+    >
       {/* D-Pad */}
       <div className="grid grid-cols-3 gap-2">
         <div />
-        <button
-          tabIndex={-1}
+        <div
+          role="button"
           aria-label="Up"
           className={`${padBtn} ${btnBase}`}
           style={{ background: "#3b3b3b" }}
@@ -200,10 +210,10 @@ function MobileControls() {
           onPointerLeave={clearRepeat}
         >
           ▲
-        </button>
+        </div>
         <div />
-        <button
-          tabIndex={-1}
+        <div
+          role="button"
           aria-label="Left"
           className={`${padBtn} ${btnBase}`}
           style={{ background: "#3b3b3b" }}
@@ -216,10 +226,10 @@ function MobileControls() {
           onPointerLeave={clearRepeat}
         >
           ◀
-        </button>
+        </div>
         <div />
-        <button
-          tabIndex={-1}
+        <div
+          role="button"
           aria-label="Right"
           className={`${padBtn} ${btnBase}`}
           style={{ background: "#3b3b3b" }}
@@ -232,10 +242,10 @@ function MobileControls() {
           onPointerLeave={clearRepeat}
         >
           ▶
-        </button>
+        </div>
         <div />
-        <button
-          tabIndex={-1}
+        <div
+          role="button"
           aria-label="Down"
           className={`${padBtn} ${btnBase}`}
           style={{ background: "#3b3b3b" }}
@@ -248,14 +258,14 @@ function MobileControls() {
           onPointerLeave={clearRepeat}
         >
           ▼
-        </button>
+        </div>
         <div />
       </div>
 
       {/* A/B buttons */}
       <div className="flex gap-4">
-        <button
-          tabIndex={-1}
+        <div
+          role="button"
           aria-label="B (Cancel)"
           className={`${btnRound} ${btnBase}`}
           style={{ background: "#6b5d66" }}
@@ -265,9 +275,9 @@ function MobileControls() {
           }}
         >
           B
-        </button>
-        <button
-          tabIndex={-1}
+        </div>
+        <div
+          role="button"
           aria-label="A (Confirm)"
           className={`${btnRound} ${btnBase}`}
           style={{ background: "#9a2c2c" }}
@@ -277,7 +287,7 @@ function MobileControls() {
           }}
         >
           A
-        </button>
+        </div>
       </div>
     </div>
   );
