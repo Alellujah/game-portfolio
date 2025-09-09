@@ -141,8 +141,17 @@ function MobileControls() {
   const repeatTimeout = useRef<number | null>(null);
   const repeatInterval = useRef<number | null>(null);
   function fire(key: string) {
-    const evt = new KeyboardEvent("keydown", { key, bubbles: true });
-    window.dispatchEvent(evt);
+    const evt = new KeyboardEvent("keydown", {
+      key,
+      bubbles: true,
+      cancelable: true,
+    });
+    const target = (document.activeElement as HTMLElement) ?? document.body;
+    try {
+      target.dispatchEvent(evt);
+    } catch {
+      window.dispatchEvent(evt);
+    }
   }
   function clearRepeat() {
     if (repeatTimeout.current != null) {
@@ -171,7 +180,7 @@ function MobileControls() {
       {/* D-Pad */}
       <div className="grid grid-cols-3 gap-2">
         <div />
-        <button
+        <button tabIndex={-1}
           aria-label="Up"
           className={`${padBtn} ${btnBase}`}
           style={{ background: "#3b3b3b" }}
@@ -186,7 +195,7 @@ function MobileControls() {
           ▲
         </button>
         <div />
-        <button
+        <button tabIndex={-1}
           aria-label="Left"
           className={`${padBtn} ${btnBase}`}
           style={{ background: "#3b3b3b" }}
@@ -201,7 +210,7 @@ function MobileControls() {
           ◀
         </button>
         <div />
-        <button
+        <button tabIndex={-1}
           aria-label="Right"
           className={`${padBtn} ${btnBase}`}
           style={{ background: "#3b3b3b" }}
@@ -216,7 +225,7 @@ function MobileControls() {
           ▶
         </button>
         <div />
-        <button
+        <button tabIndex={-1}
           aria-label="Down"
           className={`${padBtn} ${btnBase}`}
           style={{ background: "#3b3b3b" }}
@@ -235,7 +244,7 @@ function MobileControls() {
 
       {/* A/B buttons */}
       <div className="flex gap-4">
-        <button
+        <button tabIndex={-1}
           aria-label="B (Cancel)"
           className={`${btnRound} ${btnBase}`}
           style={{ background: "#6b5d66" }}
@@ -246,7 +255,7 @@ function MobileControls() {
         >
           B
         </button>
-        <button
+        <button tabIndex={-1}
           aria-label="A (Confirm)"
           className={`${btnRound} ${btnBase}`}
           style={{ background: "#9a2c2c" }}
