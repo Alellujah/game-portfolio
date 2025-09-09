@@ -128,7 +128,7 @@ function BattleIntro({
               autoPageDelay={2000}
               speed={30}
               message={fallbackMessages[0]}
-              className="w-full h-[104px]"
+              className="w-full h-[88px]"
               waiting={showMessage && !exiting}
             />
           </div>

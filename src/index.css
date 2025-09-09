@@ -104,3 +104,14 @@ body {
   to   { opacity: 1; transform: translateY(0);   filter: blur(0); }
 }
 .scene-fade-in { animation: scene-fade-in-kf 260ms ease-out both; }
+
+/* Subtle CRT scanlines overlay for ScreenFrame */
+.scanlines {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.05) 0px,
+    rgba(255, 255, 255, 0.05) 1px,
+    rgba(0, 0, 0, 0.0) 2px,
+    rgba(0, 0, 0, 0.0) 3px
+  );
+}
