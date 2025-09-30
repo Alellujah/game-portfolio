@@ -6,6 +6,7 @@ import FinalScene from "./FinalScene";
 import { SCREEN_H, SCREEN_W } from "../config/ui";
 import PlayerChoice from "./PlayerChoice";
 import { usePlayer } from "../context/PlayerContext";
+import SplashScreen from "../components/SplashScreen";
 
 interface Props {
   playerFrontSpriteUrl: string;
@@ -25,8 +26,8 @@ export default function BattleScene({
   playerFrontSpriteUrl,
 }: Props) {
   const [scene, setScene] = useState<
-    "playerSelection" | "intro" | "field" | "ending" | "end"
-  >("playerSelection");
+    "splash" | "playerSelection" | "intro" | "field" | "ending" | "end"
+  >("splash");
   const [result, setResult] = useState<"won" | "lost" | null>(null);
 
   const { selectedPlayer, setSelectedPlayer } = usePlayer();
@@ -57,6 +58,9 @@ export default function BattleScene({
       style={{ height: SCREEN_H, width: SCREEN_W, border: "1px solid black" }}
       className={"bg-stone-200 relative overflow-hidden"}
     >
+      {scene === "splash" && (
+        <SplashScreen onStart={() => setScene("playerSelection")} />
+      )}
       {scene === "playerSelection" && (
         <PlayerChoice
           onSelect={(char) => {

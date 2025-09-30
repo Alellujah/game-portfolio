@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import Sprite from "../components/Sprite";
 
 export interface Character {
   /** Unique identifier for the character. */
@@ -29,7 +30,7 @@ const characters: Character[] = [
     id: "recruiter",
     name: "IT Recruiter",
     sprite: enemySpriteUrl,
-    bio: "A very focused individual often spotted near the coffee machine.",
+    bio: "A very focused individual, pro in linkedin.",
   },
 ];
 
@@ -91,11 +92,7 @@ const PlayerChoice: React.FC<PlayerChoiceProps> = ({ onSelect }) => {
               // Also allow mouse selection.
               onClick={() => setSelectedIndex(index)}
             >
-              <img
-                src={char.sprite}
-                alt={char.name}
-                className="w-24 h-24 object-contain mb-2"
-              />
+              <Sprite spriteUrl={char.sprite} maxHeight={144} />
               <h3 className="text-sm font-bold mb-1 text-center">
                 {char.name}
               </h3>

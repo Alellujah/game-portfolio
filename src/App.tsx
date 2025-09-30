@@ -22,20 +22,18 @@ const enemySpriteBackUrl = "/players/developer-back.png";
 
 function App() {
   return (
-    <>
-      <PlayerProvider>
-        <ScreenFrame scanlines={true} label="FBoy">
-          <BattleScene
-            enemySpriteBackUrl={enemySpriteBackUrl}
-            enemySpriteFrontUrl={enemySpriteFrontUrl}
-            playerBackSpriteUrl={playerSpriteBackUrl}
-            playerFrontSpriteUrl={playerSpriteFrontUrl}
-            playerMons={playerMons}
-            enemyMons={enemyMons}
-          />
-        </ScreenFrame>
-      </PlayerProvider>
-    </>
+    <PlayerProvider>
+      <ScreenFrame scanlines={true} label="FBoy">
+        <BattleScene
+          enemySpriteBackUrl={enemySpriteBackUrl}
+          enemySpriteFrontUrl={enemySpriteFrontUrl}
+          playerBackSpriteUrl={playerSpriteBackUrl}
+          playerFrontSpriteUrl={playerSpriteFrontUrl}
+          playerMons={playerMons}
+          enemyMons={enemyMons}
+        />
+      </ScreenFrame>
+    </PlayerProvider>
   );
 }
 

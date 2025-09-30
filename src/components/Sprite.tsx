@@ -2,6 +2,7 @@ interface SpriteProps {
   spriteUrl?: string;
   size?: number; // in pixels
   player?: boolean;
+  maxHeight?: number;
 }
 
 /**
@@ -9,7 +10,7 @@ interface SpriteProps {
  * - `spriteUrl`: URL of the sprite image.
  * - `size`: Size of the sprite in pixels (default: 96).
  */
-function Sprite({ spriteUrl, size, player }: SpriteProps) {
+function Sprite({ spriteUrl, size, player, maxHeight }: SpriteProps) {
   // Resolve asset path for GitHub Pages (project subpath)
   const resolved = (() => {
     if (!spriteUrl) return undefined;
@@ -30,6 +31,7 @@ function Sprite({ spriteUrl, size, player }: SpriteProps) {
           style={{
             width: size ?? "80%",
             imageRendering: "pixelated",
+            maxHeight: maxHeight,
           }}
           className={player ? "absolute bottom-0 left-0" : ""}
           src={resolved}
@@ -40,7 +42,7 @@ function Sprite({ spriteUrl, size, player }: SpriteProps) {
           className="p-8 absolute bottom-0 left-0"
           style={{
             width: size ?? "256px",
-            height: size,
+            height: maxHeight ?? size,
             backgroundColor: "#ccc",
             display: "flex",
             justifyContent: "center",
