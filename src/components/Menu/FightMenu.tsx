@@ -81,7 +81,7 @@ function FightMenu({ skills, onSelect }: FightMenuProps) {
             <div className="border-2 border-black p-1 leading-none">
               <div className="flex flex-wrap items-baseline justify-between">
                 <span className="text-xs text-black">TYPE/</span>
-                <span className="text-xs text-black">
+                <span className="text-black" style={{ fontSize: "0.55rem" }}>
                   {selected?.type ?? "—"}
                 </span>
               </div>

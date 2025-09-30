@@ -27,11 +27,13 @@ const playerMons = [
 export const Default: Story = {
   args: {
     scanlines: true,
-    label: "FabioBoy",
+    label: "FBoy",
     children: (
       <BattleScene
-        playerSpriteUrl={"/players/recruiter-back.png"}
-        enemySpriteUrl={"/players/developer-front.png"}
+        playerBackSpriteUrl="/players/recruiter-back.png"
+        playerFrontSpriteUrl="/players/recruiter-front.png"
+        enemySpriteBackUrl="/players/developer-back.png"
+        enemySpriteFrontUrl="/players/developer-front.png"
         playerMons={playerMons}
         enemyMons={enemyMons}
       />

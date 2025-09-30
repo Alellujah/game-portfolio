@@ -28,7 +28,7 @@ function ScreenFrame({
   children,
   scanlines = true,
   scanlineOpacity = 0.65,
-  label = "GAME BOY",
+  label = "FBOY",
   controls = true,
 }: Props) {
   const [scale, setScale] = useState(1);
@@ -60,8 +60,8 @@ function ScreenFrame({
             [
               "top-2 left-2",
               "top-2 right-2",
-              "bottom-8 left-2",
-              "bottom-8 right-2",
+              "bottom-2 left-2",
+              "bottom-2 right-2",
             ] as const
           ).map((pos, i) => (
             <span
@@ -149,13 +149,19 @@ function MobileControls() {
       cancelable: true,
     });
     // Try dispatching on the registered target first (if any), then also on document.
-    const target = (getKeyTarget() as HTMLElement | null) || (document.activeElement as HTMLElement | null);
+    const target =
+      (getKeyTarget() as HTMLElement | null) ||
+      (document.activeElement as HTMLElement | null);
     try {
       if (target && target !== document.body) target.dispatchEvent(evt);
-    } catch {/* ignore */}
+    } catch {
+      /* ignore */
+    }
     try {
       document.dispatchEvent(evt);
-    } catch {/* ignore */}
+    } catch {
+      /* ignore */
+    }
   }
   function clearRepeat() {
     if (repeatTimeout.current != null) {

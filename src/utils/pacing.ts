@@ -1,9 +1,7 @@
-// src/utils/pacing.ts
-export const SPEED_MULT = 2.0; // global pacing (↑ = mais lento)
+export const SPEED_MULT = 2.0; // global pacing (more slower it is)
 
 export const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
-/** Tween linear e lento, arredonda sempre em direção ao alvo */
 export function tweenHp(
   from: number,
   to: number,
@@ -29,10 +27,8 @@ export function tweenHp(
   requestAnimationFrame(step);
 }
 
-/** duração proporcional ao dano, a um ritmo constante */
 export function hpTweenDuration(from: number, to: number) {
   const delta = Math.abs(from - to);
-  // ~50ms por HP; clamp antes do multiplicador global
   const base = Math.max(1200, Math.min(3500, Math.round(delta * 50)));
   return Math.round(base * SPEED_MULT);
 }

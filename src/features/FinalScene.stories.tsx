@@ -1,10 +1,18 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
+import type { Decorator, Meta, StoryObj } from "@storybook/react-vite";
 import FinalScene from "./FinalScene";
+import { PlayerProvider } from "../context/PlayerContext";
+
+const withProvider: Decorator = (Story) => (
+  <PlayerProvider>
+    <Story />
+  </PlayerProvider>
+);
 
 const meta: Meta<typeof FinalScene> = {
   title: "Features/FinalScene",
   component: FinalScene,
   tags: ["autodocs"],
+  decorators: [withProvider],
 };
 
 export default meta;

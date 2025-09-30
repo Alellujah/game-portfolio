@@ -3,6 +3,7 @@ import BattleMessages from "../components/BattleMessages";
 import Container from "../components/layout/Container";
 import Sprite from "../components/Sprite";
 import type { Mon } from "../engine/mons";
+import { usePlayer } from "../context/PlayerContext";
 
 type Result = "won" | "lost";
 
@@ -28,17 +29,20 @@ export default function FinalScene({
   onContact,
   contactUrl,
 }: Props) {
+  const { selectedPlayer } = usePlayer();
   const defaultMsgs =
     result === "won"
-      ? [
-          "FÁBIO lost!",
-          "Fodasse caralho, toma lá essa merda.",
-          "You earned 500 imaginary dollars. And a option.",
-        ]
-      : [
-          "You are out of usable mons...",
-          "You ran away like the coward you are!",
-        ];
+      ? selectedPlayer?.id === "recruiter"
+        ? [
+            "FABIO lost!",
+            "FABIO: Congratulations!",
+            "FABIO: You earned $500 imaginary dollars. And a option...",
+          ]
+        : [
+            "FABIO: Well better luck next time! Have this.",
+            "FABIO sent an email thanking you for your time but we are going with someone else.",
+          ]
+      : ["You are out of usable mons...", "You ran away to the nearest pub!"];
   const msgs = messages && messages.length ? messages : defaultMsgs;
   const [idx, setIdx] = useState(0);
   const [show, setShow] = useState(false);

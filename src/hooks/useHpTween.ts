@@ -1,4 +1,3 @@
-// src/hooks/useHpTween.ts
 import { useEffect, useRef, useState } from "react";
 import { hpTweenDuration, tweenHp } from "../utils/pacing";
 
@@ -15,7 +14,7 @@ export default function useHpTween(initial: number) {
     const from = ref.current;
     const dur = hpTweenDuration(from, target);
     tweenHp(from, target, setDisp, dur);
-    return dur; // útil para sincronizar waits
+    return dur;
   };
 
   return { disp, reset, to, ref };

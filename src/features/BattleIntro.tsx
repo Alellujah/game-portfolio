@@ -3,6 +3,7 @@ import BattleMessages from "../components/BattleMessages";
 import Sprite from "../components/Sprite";
 import type { Mon } from "../engine/mons";
 import MonsPreview from "./battle/MonsPreview";
+import { usePlayer } from "../context/PlayerContext";
 
 interface Props {
   playerSpriteUrl: string;
@@ -26,11 +27,15 @@ function BattleIntro({
   const [showMessage, setShowMessage] = useState(false);
   const [exiting, setExiting] = useState(false);
 
-  const fallbackMessages = [
-    "FABIO wants to battle!",
-    "fIcOu EnCrAvAdO aQuI",
-    "Burro",
-  ];
+  const playerSelected = usePlayer();
+
+  const fallbackMessages =
+    playerSelected.selectedPlayer?.id === "recruiter"
+      ? ["FABIO: Hello there! What about a battle?"]
+      : [
+          "IT RECRUITER: Do you have more than 40 years in React?",
+          "We are a very fast paced company! Let's battle!",
+        ];
   const msgs = messages && messages.length > 0 ? messages : fallbackMessages;
   const [msgIndex, setMsgIndex] = useState(0);
 

@@ -1,11 +1,19 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
+import type { Decorator, Meta, StoryObj } from "@storybook/react-vite";
 import BattleIntro from "./BattleIntro";
 import MONS from "../engine/mons";
+import { PlayerProvider } from "../context/PlayerContext";
+
+const withProvider: Decorator = (Story) => (
+  <PlayerProvider>
+    <Story />
+  </PlayerProvider>
+);
 
 const meta: Meta<typeof BattleIntro> = {
   title: "Features/BattleIntro",
   component: BattleIntro,
   tags: ["autodocs"],
+  decorators: [withProvider],
 };
 
 export default meta;
@@ -23,8 +31,8 @@ export const Default: Story = {
 
 export const WithEmptySlots: Story = {
   args: {
-    playerSpriteUrl: "/players/back-recruiter-green.png",
-    enemySpriteUrl: "/players/nerd_it_guy-green.png",
+    playerSpriteUrl: "/players/developer-back.png",
+    enemySpriteUrl: "/players/recruiter-front.png",
     playerMons: [MONS["remotemon"], MONS["paycheckuchu"]],
     enemyMons: [MONS["testzilla"]],
   },
@@ -32,8 +40,8 @@ export const WithEmptySlots: Story = {
 
 export const WithFaintedAndEmpty: Story = {
   args: {
-    playerSpriteUrl: "/players/back-recruiter-green.png",
-    enemySpriteUrl: "/players/nerd_it_guy-green.png",
+    playerSpriteUrl: "/players/developer-back.png",
+    enemySpriteUrl: "/players/recruiter-front.png",
     playerMons: [
       { ...MONS["remotemon"], hp: 0 },
       MONS["levelupzord"],
