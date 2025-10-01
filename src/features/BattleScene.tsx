@@ -78,9 +78,7 @@ export default function BattleScene({
       {scene === "splash" && (
         <SplashScreen
           onStart={() => {
-            palletTownAudioRef.current = new Audio(
-              "public/midi/pallet-town.mp3"
-            );
+            palletTownAudioRef.current = new Audio("midi/pallet-town.mp3");
             palletTownAudioRef.current.loop = true;
             palletTownAudioRef.current.muted = muted;
             palletTownAudioRef.current.play();
@@ -93,9 +91,7 @@ export default function BattleScene({
           onSelect={(char) => {
             palletTownAudioRef.current?.pause();
 
-            tainerBattleAudioRef.current = new Audio(
-              "public/midi/trainer-battle.mp3"
-            );
+            tainerBattleAudioRef.current = new Audio("midi/trainer-battle.mp3");
             tainerBattleAudioRef.current.loop = true;
             tainerBattleAudioRef.current.muted = muted;
             tainerBattleAudioRef.current.play();
