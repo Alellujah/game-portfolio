@@ -45,16 +45,11 @@ export function woodFloor(repeat: [number, number]) {
     16,
     16,
     (ctx, r) => {
-      px(ctx, "#9a6a3c", 0, 0, 16, 16);
-      for (let row = 0; row < 4; row++) {
-        const y = row * 4;
-        px(ctx, "#6e4524", 0, y + 3, 16, 1);
-        const seam = (row * 7) % 16;
-        px(ctx, "#6e4524", seam, y, 1, 3);
-        for (let i = 0; i < 6; i++) {
-          px(ctx, r() > 0.5 ? "#a9784a" : "#8a5d33", Math.floor(r() * 16), y + Math.floor(r() * 3), 2, 1);
-        }
-      }
+      // Plain light tiles with a thin border, like the house floors in Pokémon Red
+      px(ctx, "#d2a878", 0, 0, 16, 16);
+      px(ctx, "#ad8150", 0, 14, 16, 2);
+      px(ctx, "#ad8150", 14, 0, 2, 16);
+      px(ctx, "#ad8150", 4 + Math.floor(r() * 2), 5, 1, 1);
     },
     repeat
   );

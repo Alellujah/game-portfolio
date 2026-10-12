@@ -172,7 +172,8 @@ export default function Overworld({ playerId, onBattle }: Props) {
     <div className="absolute inset-0">
       <Canvas
         shadows
-        dpr={[1, 1.5]}
+        // Fixed dpr keeps the Game Boy pixel grid exact
+        dpr={1}
         gl={{ antialias: false }}
         resize={{ offsetSize: true }}
         camera={{ fov: 32, position: [5, 9.5, 14], near: 0.1, far: 60 }}
