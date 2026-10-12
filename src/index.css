@@ -146,3 +146,7 @@ body {
   to   { opacity: 1; }
 }
 .fade-to-black { animation: fade-to-black-kf 360ms ease-in both; }
+
+/* Overworld dialog "more" arrow */
+@keyframes blink-arrow-kf { 0%, 49% { opacity: 1 } 50%, 100% { opacity: 0 } }
+.blink-arrow { animation: blink-arrow-kf 900ms steps(2, end) infinite; }

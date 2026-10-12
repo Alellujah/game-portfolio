@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import BattleIntro from "./BattleIntro";
 import Battlefield from "./Battlefield";
 import { type Mon } from "../engine/mons";
@@ -7,6 +7,9 @@ import { SCREEN_H, SCREEN_W } from "../config/ui";
 import PlayerChoice from "./PlayerChoice";
 import { usePlayer } from "../context/PlayerContext";
 import SplashScreen from "../components/SplashScreen";
+
+// three.js is heavy: only load the overworld once the player gets there
+const Overworld = lazy(() => import("../overworld/Overworld"));
 
 interface Props {
   playerFrontSpriteUrl: string;
@@ -26,7 +29,7 @@ export default function BattleScene({
   playerFrontSpriteUrl,
 }: Props) {
   const [scene, setScene] = useState<
-    "splash" | "playerSelection" | "intro" | "field" | "ending" | "end"
+    "splash" | "playerSelection" | "overworld" | "intro" | "field" | "ending" | "end"
   >("splash");
   const [result, setResult] = useState<"won" | "lost" | null>(null);
 
@@ -78,6 +81,8 @@ export default function BattleScene({
       {scene === "splash" && (
         <SplashScreen
           onStart={() => {
+            // Warm up the overworld chunk while the player picks a character
+            void import("../overworld/Overworld");
             palletTownAudioRef.current = new Audio("midi/pallet-town.mp3");
             palletTownAudioRef.current.loop = true;
             palletTownAudioRef.current.muted = muted;
@@ -89,17 +94,42 @@ export default function BattleScene({
       {scene === "playerSelection" && (
         <PlayerChoice
           onSelect={(char) => {
-            palletTownAudioRef.current?.pause();
-
-            trainerBattleAudioRef.current = new Audio("midi/trainer-battle.mp3");
-            trainerBattleAudioRef.current.loop = true;
-            trainerBattleAudioRef.current.muted = muted;
-            trainerBattleAudioRef.current.play();
-
             setSelectedPlayer(char);
-            setScene("intro");
+            setScene("overworld");
           }}
         />
+      )}
+      {scene === "overworld" && (
+        <Suspense
+          fallback={
+            <div className="absolute inset-0 grid place-items-center bg-black text-white text-sm">
+              Loading...
+            </div>
+          }
+        >
+          <Overworld
+            playerId={selectedPlayer?.id}
+            playerFront={
+              selectedPlayer?.id === "recruiter"
+                ? playerFrontSpriteUrl
+                : enemySpriteFrontUrl
+            }
+            playerBack={playerSpriteUrl}
+            rivalSprite={enemySpriteUrl}
+            onBattle={() => {
+              palletTownAudioRef.current?.pause();
+
+              trainerBattleAudioRef.current = new Audio(
+                "midi/trainer-battle.mp3"
+              );
+              trainerBattleAudioRef.current.loop = true;
+              trainerBattleAudioRef.current.muted = muted;
+              trainerBattleAudioRef.current.play();
+
+              setScene("intro");
+            }}
+          />
+        </Suspense>
       )}
       {scene === "intro" && (
         <BattleIntro
