@@ -35,6 +35,11 @@ const PALETTE = {
   T: "#c0392b", // tie
   A: "#8a5a30", // briefcase
   D: "#2a2a30", // dress shoes
+  R: "#8a5a2b", // kid hair
+  r: "#b07a40", // kid hair highlight
+  E: "#f2c94c", // kid dress
+  e: "#d4a72c", // kid dress shadow
+  Q: "#e05a7a", // kid shoes
 };
 
 /* ---------------------------------- Fábio --------------------------------- */
@@ -235,17 +240,96 @@ const recruiterLeft = [
   "..KAAKuuuuuK....",
 ];
 
+/* --------------------------------- Amalie --------------------------------- */
+// Smaller than the adults: same 16x24 frame, padded at the top.
+
+const amalieLegs = {
+  stand: [
+    "....KSK..KSK....",
+    "....KSK..KSK....",
+    "...KQQK..KQQK...",
+    "...KKKK..KKKK...",
+  ],
+  walk: [
+    "....KSK..KSK....",
+    "...KQQK..KSK....",
+    "...KKKK..KQQK...",
+    ".........KKKK...",
+  ],
+  sideStand: [
+    ".....KSSK.......",
+    ".....KSSK.......",
+    "....KQQQK.......",
+    "....KKKKK.......",
+  ],
+  sideWalk: [
+    "....KSKKSK......",
+    "...KSK..KSK.....",
+    "..KQQK...KQQK...",
+    "..KKKK...KKKK...",
+  ],
+};
+
+const amalieDress = [
+  "....KEEEEEEK....",
+  "...KSEEEEEESK...",
+  "...KSEEeeEESK...",
+  "..KEEEEEEEEEEK..",
+  "..KeeeeeeeeeeK..",
+];
+
+const amalieDown = [
+  ".....KKKKKK.....",
+  "...KKRRrRRRKK...",
+  "..KRKRRRRRRKRK..",
+  ".KRRKRSSSSRKRRK.",
+  ".KRKSKSSSSKSKRK.",
+  "..KKsSSSSSSsKK..",
+  "...KSSSSSSSSK...",
+  "....KKKKKKKK....",
+  ...amalieDress,
+];
+
+const amalieUp = [
+  ".....KKKKKK.....",
+  "...KKRRrRRRKK...",
+  "..KRKRRRRRRKRK..",
+  ".KRRKRRRRRRKRRK.",
+  ".KRKRRRrRRRRKRK.",
+  "..KKRRRRRRRRKK..",
+  "...KsRRRRRRsK...",
+  "....KKKKKKKK....",
+  ...amalieDress,
+];
+
+const amalieLeft = [
+  "......KKKKK.....",
+  "....KKRRrRRK....",
+  "...KRRRRRRRRK...",
+  "..KSSSRRRRRRKRK.",
+  "..KSKSSRRRRRKRRK",
+  ".KSSSSSsRRRRKKK.",
+  "..KsSSSSsRRK....",
+  "...KKKKKKKK.....",
+  ".....KEEEEK.....",
+  "....KESEEEK.....",
+  "....KESEeEK.....",
+  "...KEEEEEEEK....",
+  "...KeeeeeeeK....",
+];
+
 /* --------------------------------- builder --------------------------------- */
 
 const mirror = (rows) => rows.map((r) => [...r].reverse().join(""));
 
-function frames(body, legs) {
-  const down = [...body.down, ...legs.stand];
-  const downWalk = [...body.down, ...legs.walk];
-  const up = [...body.up, ...legs.stand];
-  const upWalk = [...body.up, ...legs.walk];
-  const left = [...body.left, ...legs.sideStand];
-  const leftWalk = [...body.left, ...legs.sideWalk];
+function frames(body, legs, padTop = 0) {
+  const pad = Array(padTop).fill(".".repeat(FRAME_W));
+  const down = [...pad, ...body.down, ...legs.stand];
+  const downWalk = [...pad, ...body.down, ...legs.walk];
+  const up = [...pad, ...body.up, ...legs.stand];
+  const upWalk = [...pad, ...body.up, ...legs.walk];
+  const left = [...pad, ...body.left, ...legs.sideStand];
+  const leftWalk = [...pad, ...body.left, ...legs.sideWalk];
   return [
     [down, downWalk, down, mirror(downWalk)],
     [up, upWalk, up, mirror(upWalk)],
@@ -293,3 +377,4 @@ await writeSheet(
   "recruiter",
   frames({ down: recruiterDown, up: recruiterUp, left: recruiterLeft }, recruiterLegs)
 );
+await writeSheet("amalie", frames({ down: amalieDown, up: amalieUp, left: amalieLeft }, amalieLegs, 7));

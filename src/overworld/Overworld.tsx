@@ -3,6 +3,7 @@ import { Canvas } from "@react-three/fiber";
 import World from "./World";
 import DialogBox from "./DialogBox";
 import {
+  AMALIE_SPAWN,
   DECOR_CELLS,
   INTERACTABLES,
   INTRO_PAGES,
@@ -10,12 +11,13 @@ import {
   MAP_W,
   RIVAL,
   SPAWN,
+  amaliePages,
   rivalPages,
   type Cell,
   type Dir,
   type Page,
 } from "./content";
-import { createController, frontCell } from "./controller";
+import { createController, occupies } from "./controller";
 
 const KEY_DIRS: Record<string, Dir> = {
   ArrowUp: "up",
@@ -28,6 +30,15 @@ const KEY_DIRS: Record<string, Dir> = {
   d: "right",
 };
 const INTERACT_KEYS = new Set(["Enter", " ", "z", "Z"]);
+const OPPOSITE: Record<Dir, Dir> = { up: "down", down: "up", left: "right", right: "left" };
+const SHEETS = { developer: "/sprites/fabio.png", recruiter: "/sprites/recruiter.png" };
+
+// Amalie runs: much quicker steps than the player
+const AMALIE_STEP_SECONDS = 0.13;
+// How long the "!" shows over the rival before they speak
+const ALERT_MS = 750;
+// Must match the .battle-transition animation in index.css
+const BATTLE_TRANSITION_MS = 1300;
 
 const key = (c: Cell) => `${c[0]},${c[1]}`;
 
@@ -36,27 +47,24 @@ type Props = {
   onBattle: () => void;
 };
 
-const SHEETS = { developer: "/sprites/fabio.png", recruiter: "/sprites/recruiter.png" };
-
-type Dialog = { id: string; pages: Page[]; face?: Dir };
-
-const OPPOSITE: Record<Dir, Dir> = { up: "down", down: "up", left: "right", right: "left" };
+type Dialog = { id: string; pages: Page[] };
 
 /**
  * Explorable HD-2D room: 3D environment, 2D billboard sprites.
  * Inspecting objects reveals info about Fábio; talking to the rival starts the battle.
  */
-export default function Overworld({
-  playerId,
-  onBattle,
-}: Props) {
+export default function Overworld({ playerId, onBattle }: Props) {
   const isRecruiter = playerId === "recruiter";
   const ctrl = useRef(createController(SPAWN));
-  const [dialog, setDialog] = useState<Dialog | null>({
-    id: "intro",
-    pages: INTRO_PAGES,
-  });
+  const amalie = useRef(createController(AMALIE_SPAWN, AMALIE_STEP_SECONDS, "left"));
+  const amalieTalks = useRef(0);
+
+  const [dialog, setDialog] = useState<Dialog | null>({ id: "intro", pages: INTRO_PAGES });
   const [visited, setVisited] = useState<Set<string>>(() => new Set());
+  const [target, setTarget] = useState<string | null>(null);
+  const [rivalFacing, setRivalFacing] = useState<Dir>("down");
+  const [rivalAlert, setRivalAlert] = useState(false);
+  const [transition, setTransition] = useState(false);
 
   const { blocked, byCell } = useMemo(() => {
     const byCell = new Map<string, string>();
@@ -66,44 +74,70 @@ export default function Overworld({
     return { blocked, byCell };
   }, []);
 
-  const walkable = useCallback(
+  const baseWalkable = useCallback(
     (c: Cell) =>
       c[0] >= 0 && c[0] < MAP_W && c[1] >= 0 && c[1] < MAP_H && !blocked.has(key(c)),
     [blocked]
   );
+  const playerWalkable = useCallback(
+    (c: Cell) => baseWalkable(c) && !occupies(amalie.current, c),
+    [baseWalkable]
+  );
+  const amalieWalkable = useCallback(
+    (c: Cell) => baseWalkable(c) && !occupies(ctrl.current, c),
+    [baseWalkable]
+  );
+  const targetAt = useCallback(
+    (c: Cell) => (occupies(amalie.current, c) ? "amalie" : byCell.get(key(c)) ?? null),
+    [byCell]
+  );
 
-  // Freeze movement while a dialog is open
+  // Freeze the player (and Amalie, when talking to her) while busy
+  const busy = dialog !== null || rivalAlert || transition;
   useEffect(() => {
-    ctrl.current.locked = dialog !== null;
-    if (dialog) ctrl.current.held = [];
-  }, [dialog]);
+    ctrl.current.locked = busy;
+    if (busy) ctrl.current.held = [];
+    amalie.current.locked = dialog?.id === "amalie";
+  }, [busy, dialog]);
 
   const interact = useCallback(() => {
     const c = ctrl.current;
-    if (c.t < 1) return;
-    const id = byCell.get(key(frontCell(c)));
-    if (!id) return;
-    if (id === "rival") {
-      setDialog({ id, pages: rivalPages(playerId, visited.size), face: OPPOSITE[c.facing] });
+    if (c.t < 1 || !target) return;
+    if (target === "rival") {
+      // Classic trainer encounter: "!" first, then they speak
+      setRivalFacing(OPPOSITE[c.facing]);
+      setRivalAlert(true);
+      window.setTimeout(() => {
+        setRivalAlert(false);
+        setDialog({ id: "rival", pages: rivalPages(playerId, visited.size) });
+      }, ALERT_MS);
       return;
     }
-    const it = INTERACTABLES.find((i) => i.id === id);
-    if (it) setDialog({ id, pages: it.pages });
-  }, [byCell, playerId, visited.size]);
+    if (target === "amalie") {
+      amalie.current.facing = OPPOSITE[c.facing];
+      setDialog({ id: "amalie", pages: amaliePages(amalieTalks.current++) });
+      return;
+    }
+    const it = INTERACTABLES.find((i) => i.id === target);
+    if (it) setDialog({ id: target, pages: it.pages });
+  }, [target, playerId, visited.size]);
 
   const closeDialog = useCallback(() => {
     if (!dialog) return;
     if (dialog.id === "rival") {
-      onBattle();
+      setDialog(null);
+      setTransition(true);
+      window.setTimeout(onBattle, BATTLE_TRANSITION_MS);
       return;
     }
-    if (dialog.id !== "intro") setVisited((v) => new Set(v).add(dialog.id));
+    if (INTERACTABLES.some((i) => i.id === dialog.id))
+      setVisited((v) => new Set(v).add(dialog.id));
     setDialog(null);
   }, [dialog, onBattle]);
 
   useEffect(() => {
     const onDown = (e: KeyboardEvent) => {
-      if (dialog) return; // DialogBox handles its own keys
+      if (busy) return; // DialogBox handles its own keys
       const dir = KEY_DIRS[e.key];
       if (dir) {
         e.preventDefault();
@@ -132,25 +166,31 @@ export default function Overworld({
       document.removeEventListener("keyup", onUp);
       window.removeEventListener("blur", clearHeld);
     };
-  }, [dialog, interact]);
+  }, [busy, interact]);
 
   return (
-    <div className="absolute inset-0 scene-fade-in">
+    <div className="absolute inset-0">
       <Canvas
         shadows
         dpr={[1, 1.5]}
         gl={{ antialias: false }}
         resize={{ offsetSize: true }}
-        camera={{ fov: 32, position: [5, 10.5, 12.5], near: 0.1, far: 60 }}
+        camera={{ fov: 32, position: [5, 9.5, 14], near: 0.1, far: 60 }}
       >
         <Suspense fallback={null}>
           <World
             ctrl={ctrl}
-            walkable={walkable}
+            amalie={amalie}
+            playerWalkable={playerWalkable}
+            amalieWalkable={amalieWalkable}
+            targetAt={targetAt}
+            onTarget={setTarget}
             playerSheet={isRecruiter ? SHEETS.recruiter : SHEETS.developer}
             rivalSheet={isRecruiter ? SHEETS.developer : SHEETS.recruiter}
-            // The rival turns to face the player when talked to
-            rivalFacing={dialog?.face ?? "down"}
+            rivalFacing={rivalFacing}
+            rivalAlert={rivalAlert}
+            dialogOpen={dialog !== null}
+            visited={visited}
           />
         </Suspense>
       </Canvas>
@@ -159,7 +199,17 @@ export default function Overworld({
         FOUND {visited.size}/{INTERACTABLES.length}
       </div>
 
+      {target && !busy && (
+        <div className="absolute bottom-2 right-2 z-10 bg-white border-4 border-black px-2 py-1 text-[11px] hint-pop">
+          A / ENTER: {target === "rival" || target === "amalie" ? "TALK" : "INSPECT"}
+        </div>
+      )}
+
       {dialog && <DialogBox key={dialog.id} pages={dialog.pages} onClose={closeDialog} />}
+
+      {/* Fade in from black when entering the room */}
+      <div className="absolute inset-0 z-30 bg-black pointer-events-none fade-from-black" />
+      {transition && <div className="absolute inset-0 z-40 battle-transition" />}
     </div>
   );
 }
