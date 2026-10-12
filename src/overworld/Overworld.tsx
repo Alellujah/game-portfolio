@@ -33,13 +33,14 @@ const key = (c: Cell) => `${c[0]},${c[1]}`;
 
 type Props = {
   playerId: string | undefined;
-  playerFront: string;
-  playerBack: string;
-  rivalSprite: string;
   onBattle: () => void;
 };
 
-type Dialog = { id: string; pages: Page[] };
+const SHEETS = { developer: "/sprites/fabio.png", recruiter: "/sprites/recruiter.png" };
+
+type Dialog = { id: string; pages: Page[]; face?: Dir };
+
+const OPPOSITE: Record<Dir, Dir> = { up: "down", down: "up", left: "right", right: "left" };
 
 /**
  * Explorable HD-2D room: 3D environment, 2D billboard sprites.
@@ -47,11 +48,9 @@ type Dialog = { id: string; pages: Page[] };
  */
 export default function Overworld({
   playerId,
-  playerFront,
-  playerBack,
-  rivalSprite,
   onBattle,
 }: Props) {
+  const isRecruiter = playerId === "recruiter";
   const ctrl = useRef(createController(SPAWN));
   const [dialog, setDialog] = useState<Dialog | null>({
     id: "intro",
@@ -85,7 +84,7 @@ export default function Overworld({
     const id = byCell.get(key(frontCell(c)));
     if (!id) return;
     if (id === "rival") {
-      setDialog({ id, pages: rivalPages(playerId, visited.size) });
+      setDialog({ id, pages: rivalPages(playerId, visited.size), face: OPPOSITE[c.facing] });
       return;
     }
     const it = INTERACTABLES.find((i) => i.id === id);
@@ -142,15 +141,16 @@ export default function Overworld({
         dpr={[1, 1.5]}
         gl={{ antialias: false }}
         resize={{ offsetSize: true }}
-        camera={{ fov: 32, position: [5, 8.4, 14.5], near: 0.1, far: 60 }}
+        camera={{ fov: 32, position: [5, 10.5, 12.5], near: 0.1, far: 60 }}
       >
         <Suspense fallback={null}>
           <World
             ctrl={ctrl}
             walkable={walkable}
-            playerFront={playerFront}
-            playerBack={playerBack}
-            rivalSprite={rivalSprite}
+            playerSheet={isRecruiter ? SHEETS.recruiter : SHEETS.developer}
+            rivalSheet={isRecruiter ? SHEETS.developer : SHEETS.recruiter}
+            // The rival turns to face the player when talked to
+            rivalFacing={dialog?.face ?? "down"}
           />
         </Suspense>
       </Canvas>

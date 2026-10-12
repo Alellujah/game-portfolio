@@ -109,13 +109,6 @@ export default function BattleScene({
         >
           <Overworld
             playerId={selectedPlayer?.id}
-            playerFront={
-              selectedPlayer?.id === "recruiter"
-                ? playerFrontSpriteUrl
-                : enemySpriteFrontUrl
-            }
-            playerBack={playerSpriteUrl}
-            rivalSprite={enemySpriteUrl}
             onBattle={() => {
               palletTownAudioRef.current?.pause();
 

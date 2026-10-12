@@ -14,6 +14,8 @@ export type Controller = {
   // Directions currently held on a physical keyboard, most recent last
   held: Dir[];
   locked: boolean;
+  // Total steps taken (alternates the walking foot)
+  steps: number;
 };
 
 export const STEP_SECONDS = 0.2;
@@ -27,6 +29,7 @@ export function createController(spawn: Cell): Controller {
     queued: null,
     held: [],
     locked: true,
+    steps: 0,
   };
 }
 
@@ -54,5 +57,6 @@ export function stepController(
     c.from = c.tile;
     c.tile = next;
     c.t = 0;
+    c.steps++;
   }
 }

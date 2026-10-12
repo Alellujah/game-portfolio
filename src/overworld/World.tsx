@@ -7,26 +7,20 @@ import {
   Vignette,
 } from "@react-three/postprocessing";
 import * as THREE from "three";
-import { MAP_H, MAP_W, RIVAL, type Cell } from "./content";
+import { MAP_H, MAP_W, RIVAL, type Cell, type Dir } from "./content";
 import { stepController, type Controller } from "./controller";
 import * as tex from "./textures";
 
 type Vec3 = [number, number, number];
 
-const CAMERA_OFFSET = new THREE.Vector3(0, 8.4, 10.5);
-const SPRITE_H = 1.3;
+const CAMERA_OFFSET = new THREE.Vector3(0, 9.5, 8.5);
+// 16x24 px sprites: one tile wide, 1.5 tiles tall
+const SPRITE_H = 1.5;
 // Sprites lean back a bit towards the camera, HD-2D style
-const SPRITE_TILT = -0.35;
+const SPRITE_TILT = -0.5;
 
 function assetUrl(path: string) {
   return path.startsWith("/") ? import.meta.env.BASE_URL + path.slice(1) : path;
-}
-
-function prepSprite(t: THREE.Texture) {
-  t.colorSpace = THREE.SRGBColorSpace;
-  t.magFilter = THREE.NearestFilter;
-  t.minFilter = THREE.LinearFilter;
-  return t;
 }
 
 /* ---------------------------------- props --------------------------------- */
@@ -272,6 +266,11 @@ function Room() {
 
 /* -------------------------------- characters ------------------------------- */
 
+// Sprite sheets: 4x4 frames (rows: down, up, left, right; cols: stand, walk A, stand, walk B)
+const SHEET_COLS = 4;
+const SHEET_ROWS = 4;
+const FACING_ROW: Record<Dir, number> = { down: 0, up: 1, left: 2, right: 3 };
+
 function Shadow() {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
@@ -281,93 +280,95 @@ function Shadow() {
   );
 }
 
-function spriteMaterial(map: THREE.Texture) {
-  return new THREE.MeshStandardMaterial({
-    map,
-    alphaTest: 0.5,
-    side: THREE.DoubleSide,
-    roughness: 1,
-    emissiveMap: map,
-    emissive: new THREE.Color("#ffffff"),
-    emissiveIntensity: 0.3,
-  });
+function useSheet(url: string) {
+  const sheet = useLoader(THREE.TextureLoader, assetUrl(url));
+  return useMemo(() => {
+    // Each character gets its own texture so frame offsets don't clash
+    const map = sheet.clone();
+    map.colorSpace = THREE.SRGBColorSpace;
+    map.magFilter = THREE.NearestFilter;
+    map.minFilter = THREE.NearestFilter;
+    map.generateMipmaps = false;
+    map.repeat.set(1 / SHEET_COLS, 1 / SHEET_ROWS);
+    map.needsUpdate = true;
+    const material = new THREE.MeshStandardMaterial({
+      map,
+      alphaTest: 0.5,
+      side: THREE.DoubleSide,
+      roughness: 1,
+      emissiveMap: map,
+      emissive: new THREE.Color("#ffffff"),
+      emissiveIntensity: 0.3,
+    });
+    const img = sheet.image as HTMLImageElement;
+    const aspect = img.width / SHEET_COLS / (img.height / SHEET_ROWS);
+    const setFrame = (facing: Dir, col: number) => {
+      map.offset.set(col / SHEET_COLS, 1 - (FACING_ROW[facing] + 1) / SHEET_ROWS);
+    };
+    return { material, aspect, setFrame };
+  }, [sheet]);
 }
 
-function Player({
-  ctrl,
-  frontUrl,
-  backUrl,
+function CharacterSprite({
+  material,
+  aspect,
+  spriteRef,
 }: {
-  ctrl: RefObject<Controller>;
-  frontUrl: string;
-  backUrl: string;
+  material: THREE.Material;
+  aspect: number;
+  spriteRef: RefObject<THREE.Mesh | null>;
 }) {
-  const [front, back] = useLoader(THREE.TextureLoader, [
-    assetUrl(frontUrl),
-    assetUrl(backUrl),
-  ]);
+  return (
+    <>
+      <Shadow />
+      <group rotation={[SPRITE_TILT, 0, 0]}>
+        <mesh
+          ref={spriteRef}
+          material={material}
+          position={[0, SPRITE_H / 2, 0]}
+          scale={[SPRITE_H * aspect, SPRITE_H, 1]}
+          castShadow
+        >
+          <planeGeometry args={[1, 1]} />
+        </mesh>
+      </group>
+    </>
+  );
+}
+
+function Player({ ctrl, sheetUrl }: { ctrl: RefObject<Controller>; sheetUrl: string }) {
+  const { material, aspect, setFrame } = useSheet(sheetUrl);
   const group = useRef<THREE.Group>(null);
   const sprite = useRef<THREE.Mesh>(null);
-  const mats = useMemo(
-    () => ({ front: spriteMaterial(prepSprite(front)), back: spriteMaterial(prepSprite(back)) }),
-    [front, back]
-  );
 
-  useFrame(({ clock }) => {
+  useFrame(() => {
     const c = ctrl.current;
     if (!group.current || !sprite.current) return;
     const x = THREE.MathUtils.lerp(c.from[0], c.tile[0], c.t);
     const z = THREE.MathUtils.lerp(c.from[1], c.tile[1], c.t);
     group.current.position.set(x, 0, z);
 
-    const facingUp = c.facing === "up";
-    const mat = facingUp ? mats.back : mats.front;
-    sprite.current.material = mat;
-    const img = mat.map!.image as HTMLImageElement;
-    const aspect = img.width / img.height;
-    const flip = c.facing === "left" ? -1 : 1;
-    sprite.current.scale.set(SPRITE_H * aspect * flip, SPRITE_H, 1);
-
-    const moving = c.t < 1;
-    const bob = moving
-      ? Math.abs(Math.sin(c.t * Math.PI)) * 0.1
-      : Math.sin(clock.getElapsedTime() * 2) * 0.015;
-    sprite.current.position.y = SPRITE_H / 2 + bob;
+    // Gen 1 style: show a walk frame for the first part of each step, alternating feet
+    const walking = c.t < 0.6;
+    setFrame(c.facing, walking ? (c.steps % 2 ? 1 : 3) : 0);
+    sprite.current.position.y = SPRITE_H / 2 + (walking ? 0.04 : 0);
   });
 
   return (
     <group ref={group}>
-      <Shadow />
-      <group rotation={[SPRITE_TILT, 0, 0]}>
-        <mesh ref={sprite} castShadow material={mats.front}>
-          <planeGeometry args={[1, 1]} />
-        </mesh>
-      </group>
+      <CharacterSprite material={material} aspect={aspect} spriteRef={sprite} />
     </group>
   );
 }
 
-function Rival({ url }: { url: string }) {
-  const map = useLoader(THREE.TextureLoader, assetUrl(url));
-  const mat = useMemo(() => spriteMaterial(prepSprite(map)), [map]);
+function Rival({ sheetUrl, facing }: { sheetUrl: string; facing: Dir }) {
+  const { material, aspect, setFrame } = useSheet(sheetUrl);
   const sprite = useRef<THREE.Mesh>(null);
-  const img = map.image as HTMLImageElement;
-  const aspect = img.width / img.height;
-
-  useFrame(({ clock }) => {
-    if (sprite.current)
-      sprite.current.position.y =
-        SPRITE_H / 2 + Math.sin(clock.getElapsedTime() * 2 + 1) * 0.015;
-  });
+  useFrame(() => setFrame(facing, 0));
 
   return (
     <group position={[RIVAL[0], 0, RIVAL[1]]}>
-      <Shadow />
-      <group rotation={[SPRITE_TILT, 0, 0]}>
-        <mesh ref={sprite} material={mat} scale={[SPRITE_H * aspect, SPRITE_H, 1]} castShadow>
-          <planeGeometry args={[1, 1]} />
-        </mesh>
-      </group>
+      <CharacterSprite material={material} aspect={aspect} spriteRef={sprite} />
     </group>
   );
 }
@@ -431,17 +432,17 @@ function Controls({
 type WorldProps = {
   ctrl: RefObject<Controller>;
   walkable: (cell: Cell) => boolean;
-  playerFront: string;
-  playerBack: string;
-  rivalSprite: string;
+  playerSheet: string;
+  rivalSheet: string;
+  rivalFacing: Dir;
 };
 
 export default function World({
   ctrl,
   walkable,
-  playerFront,
-  playerBack,
-  rivalSprite,
+  playerSheet,
+  rivalSheet,
+  rivalFacing,
 }: WorldProps) {
   return (
     <>
@@ -466,8 +467,8 @@ export default function World({
       <Controls ctrl={ctrl} walkable={walkable} />
       <CameraRig ctrl={ctrl} />
       <Room />
-      <Player ctrl={ctrl} frontUrl={playerFront} backUrl={playerBack} />
-      <Rival url={rivalSprite} />
+      <Player ctrl={ctrl} sheetUrl={playerSheet} />
+      <Rival sheetUrl={rivalSheet} facing={rivalFacing} />
 
       <EffectComposer multisampling={0}>
         <Bloom mipmapBlur luminanceThreshold={0.85} intensity={0.9} />
