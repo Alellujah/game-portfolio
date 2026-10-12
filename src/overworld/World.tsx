@@ -7,17 +7,34 @@ import {
   Vignette,
 } from "@react-three/postprocessing";
 import * as THREE from "three";
-import { MAP_H, MAP_W, RIVAL, type Cell, type Dir } from "./content";
-import { stepController, type Controller } from "./controller";
+import {
+  DIRS,
+  INTERACTABLES,
+  MAP_H,
+  MAP_W,
+  NPC_HINT_Y,
+  RIVAL,
+  type Cell,
+  type Dir,
+} from "./content";
+import {
+  controllerPos,
+  frontCell,
+  stepController,
+  type Controller,
+} from "./controller";
 import * as tex from "./textures";
 
 type Vec3 = [number, number, number];
 
 const CAMERA_OFFSET = new THREE.Vector3(0, 9.5, 8.5);
-// 16x24 px sprites: one tile wide, 1.5 tiles tall
-const SPRITE_H = 1.5;
-// Sprites lean back a bit towards the camera, HD-2D style
-const SPRITE_TILT = -0.5;
+const CAMERA_PITCH = Math.atan2(CAMERA_OFFSET.y, CAMERA_OFFSET.z);
+// Sprites stand almost upright (leaning back would push heads into the walls)
+const SPRITE_TILT = -0.15;
+// 16x24 px sprites, one tile wide. Stretch vertically to undo the camera's
+// foreshortening so pixels stay square on screen.
+const SPRITE_W = 1;
+const SPRITE_H = (SPRITE_W * 1.5) / Math.cos(CAMERA_PITCH + SPRITE_TILT);
 
 function assetUrl(path: string) {
   return path.startsWith("/") ? import.meta.env.BASE_URL + path.slice(1) : path;
@@ -57,20 +74,27 @@ function Block({ position, size, color, face }: BlockProps) {
 }
 
 function Plant({ cell }: { cell: Cell }) {
+  const leaves = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    if (leaves.current)
+      leaves.current.rotation.z = Math.sin(clock.getElapsedTime() * 1.3 + cell[0]) * 0.05;
+  });
   return (
     <group position={[cell[0], 0, cell[1]]}>
       <mesh position={[0, 0.25, 0]} castShadow>
         <cylinderGeometry args={[0.22, 0.17, 0.5, 8]} />
         <meshStandardMaterial color="#b5653a" roughness={1} />
       </mesh>
-      <mesh position={[0, 0.85, 0]} castShadow>
+      <group ref={leaves} position={[0, 0.5, 0]}>
+      <mesh position={[0, 0.35, 0]} castShadow>
         <icosahedronGeometry args={[0.42, 0]} />
         <meshStandardMaterial color="#3f8f4a" roughness={1} flatShading />
       </mesh>
-      <mesh position={[0.15, 1.15, 0.05]} castShadow>
+      <mesh position={[0.15, 0.65, 0.05]} castShadow>
         <icosahedronGeometry args={[0.25, 0]} />
         <meshStandardMaterial color="#56a85e" roughness={1} flatShading />
       </mesh>
+      </group>
     </group>
   );
 }
@@ -271,10 +295,10 @@ const SHEET_COLS = 4;
 const SHEET_ROWS = 4;
 const FACING_ROW: Record<Dir, number> = { down: 0, up: 1, left: 2, right: 3 };
 
-function Shadow() {
+function Shadow({ size = 0.32 }: { size?: number }) {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
-      <circleGeometry args={[0.32, 16]} />
+      <circleGeometry args={[size, 16]} />
       <meshBasicMaterial color="#000" transparent opacity={0.35} depthWrite={false} />
     </mesh>
   );
@@ -300,76 +324,269 @@ function useSheet(url: string) {
       emissive: new THREE.Color("#ffffff"),
       emissiveIntensity: 0.3,
     });
-    const img = sheet.image as HTMLImageElement;
-    const aspect = img.width / SHEET_COLS / (img.height / SHEET_ROWS);
     const setFrame = (facing: Dir, col: number) => {
       map.offset.set(col / SHEET_COLS, 1 - (FACING_ROW[facing] + 1) / SHEET_ROWS);
     };
-    return { material, aspect, setFrame };
+    return { material, setFrame };
   }, [sheet]);
 }
 
-function CharacterSprite({
-  material,
-  aspect,
-  spriteRef,
-}: {
-  material: THREE.Material;
-  aspect: number;
-  spriteRef: RefObject<THREE.Mesh | null>;
-}) {
+/** A sprite that follows a Controller and animates its walk cycle. */
+function Walker({ ctrl, sheetUrl }: { ctrl: RefObject<Controller>; sheetUrl: string }) {
+  const { material, setFrame } = useSheet(sheetUrl);
+  const group = useRef<THREE.Group>(null);
+
+  useFrame(() => {
+    const c = ctrl.current;
+    if (!group.current) return;
+    const [x, z] = controllerPos(c);
+    group.current.position.set(x, 0, z);
+    // Gen 1 style: walk frame for the first half of each step, alternating feet
+    const walking = c.t < 0.5;
+    setFrame(c.facing, walking ? (c.steps % 2 ? 1 : 3) : 0);
+  });
+
   return (
-    <>
+    <group ref={group}>
       <Shadow />
       <group rotation={[SPRITE_TILT, 0, 0]}>
         <mesh
-          ref={spriteRef}
           material={material}
           position={[0, SPRITE_H / 2, 0]}
-          scale={[SPRITE_H * aspect, SPRITE_H, 1]}
+          scale={[SPRITE_W, SPRITE_H, 1]}
           castShadow
         >
           <planeGeometry args={[1, 1]} />
         </mesh>
       </group>
-    </>
-  );
-}
-
-function Player({ ctrl, sheetUrl }: { ctrl: RefObject<Controller>; sheetUrl: string }) {
-  const { material, aspect, setFrame } = useSheet(sheetUrl);
-  const group = useRef<THREE.Group>(null);
-  const sprite = useRef<THREE.Mesh>(null);
-
-  useFrame(() => {
-    const c = ctrl.current;
-    if (!group.current || !sprite.current) return;
-    const x = THREE.MathUtils.lerp(c.from[0], c.tile[0], c.t);
-    const z = THREE.MathUtils.lerp(c.from[1], c.tile[1], c.t);
-    group.current.position.set(x, 0, z);
-
-    // Gen 1 style: show a walk frame for the first part of each step, alternating feet
-    const walking = c.t < 0.6;
-    setFrame(c.facing, walking ? (c.steps % 2 ? 1 : 3) : 0);
-    sprite.current.position.y = SPRITE_H / 2 + (walking ? 0.04 : 0);
-  });
-
-  return (
-    <group ref={group}>
-      <CharacterSprite material={material} aspect={aspect} spriteRef={sprite} />
     </group>
   );
 }
 
 function Rival({ sheetUrl, facing }: { sheetUrl: string; facing: Dir }) {
-  const { material, aspect, setFrame } = useSheet(sheetUrl);
-  const sprite = useRef<THREE.Mesh>(null);
-  useFrame(() => setFrame(facing, 0));
+  const ctrl = useRef(createStatic(RIVAL));
+  useFrame(() => {
+    ctrl.current.facing = facing;
+  });
+  return <Walker ctrl={ctrl} sheetUrl={sheetUrl} />;
+}
+
+function createStatic(cell: Cell): Controller {
+  return {
+    tile: cell,
+    from: cell,
+    t: 1,
+    stepSeconds: 1,
+    facing: "down",
+    queued: null,
+    held: [],
+    locked: true,
+    steps: 0,
+    turnTimer: 0,
+  };
+}
+
+const DIR_LIST = Object.keys(DIRS) as Dir[];
+
+/** Amalie runs around in short bursts, pausing in between. */
+function AmalieBrain({
+  ctrl,
+  walkable,
+}: {
+  ctrl: RefObject<Controller>;
+  walkable: (cell: Cell) => boolean;
+}) {
+  const ai = useRef({ wait: 1.5, burst: 0, dir: "left" as Dir });
+  useFrame((_, rawDt) => {
+    const dt = Math.min(rawDt, 0.1);
+    const c = ctrl.current;
+    const brain = ai.current;
+    if (!c.locked && c.t >= 1 && c.turnTimer <= 0) {
+      if (brain.burst > 0) {
+        c.queued = brain.dir;
+        brain.burst--;
+      } else {
+        brain.wait -= dt;
+        if (brain.wait <= 0) {
+          brain.dir = DIR_LIST[Math.floor(Math.random() * DIR_LIST.length)];
+          brain.burst = 1 + Math.floor(Math.random() * 4);
+          brain.wait = 0.4 + Math.random() * 1.8;
+        }
+      }
+    }
+    if (stepController(c, dt, walkable) === "blocked") brain.burst = 0;
+  });
+  return null;
+}
+
+/* ---------------------------------- hints ---------------------------------- */
+
+function hintAnchor(id: string, amalie: Controller): Vec3 | null {
+  if (id === "rival") return [RIVAL[0], NPC_HINT_Y.rival, RIVAL[1]];
+  if (id === "amalie") {
+    const [x, z] = controllerPos(amalie);
+    return [x, NPC_HINT_Y.amalie, z];
+  }
+  const it = INTERACTABLES.find((i) => i.id === id);
+  if (!it) return null;
+  const x = it.cells.reduce((a, c) => a + c[0], 0) / it.cells.length;
+  const z = it.cells.reduce((a, c) => a + c[1], 0) / it.cells.length;
+  // Wall-mounted things (z < 0) get their bubble pulled into the room a bit
+  return [x, it.hintY, Math.max(z, -0.3)];
+}
+
+function Bubble({
+  texture,
+  getPosition,
+}: {
+  texture: THREE.Texture;
+  getPosition: () => Vec3 | null;
+}) {
+  const sprite = useRef<THREE.Sprite>(null);
+  useFrame(({ clock }) => {
+    const s = sprite.current;
+    if (!s) return;
+    const p = getPosition();
+    s.visible = p !== null;
+    if (p) s.position.set(p[0], p[1] + Math.abs(Math.sin(clock.getElapsedTime() * 5)) * 0.08, p[2]);
+  });
+  return (
+    <sprite ref={sprite} scale={[0.6, 0.6, 1]} renderOrder={10}>
+      <spriteMaterial map={texture} depthTest={false} toneMapped={false} />
+    </sprite>
+  );
+}
+
+/** Tracks what the player is facing and shows the "A" bubble over it. */
+function InteractHint({
+  ctrl,
+  amalie,
+  targetAt,
+  hidden,
+  onTarget,
+}: {
+  ctrl: RefObject<Controller>;
+  amalie: RefObject<Controller>;
+  targetAt: (cell: Cell) => string | null;
+  hidden: boolean;
+  onTarget: (id: string | null) => void;
+}) {
+  const texture = useMemo(() => tex.bubble("A", "#c0392b"), []);
+  const current = useRef<string | null>(null);
+
+  useFrame(() => {
+    const c = ctrl.current;
+    const id = c.t >= 1 ? targetAt(frontCell(c)) : null;
+    if (id !== current.current) {
+      current.current = id;
+      onTarget(id);
+    }
+  });
 
   return (
-    <group position={[RIVAL[0], 0, RIVAL[1]]}>
-      <CharacterSprite material={material} aspect={aspect} spriteRef={sprite} />
-    </group>
+    <Bubble
+      texture={texture}
+      getPosition={() =>
+        hidden || !current.current ? null : hintAnchor(current.current, amalie.current)
+      }
+    />
+  );
+}
+
+function RivalAlert({ show }: { show: boolean }) {
+  const texture = useMemo(() => tex.bubble("!", "#d62828"), []);
+  return (
+    <Bubble
+      texture={texture}
+      getPosition={() => (show ? [RIVAL[0], NPC_HINT_Y.rival + 0.1, RIVAL[1]] : null)}
+    />
+  );
+}
+
+/** Twinkles over things the player hasn't inspected yet. */
+function Sparkles({ visited }: { visited: Set<string> }) {
+  const texture = useMemo(() => tex.sparkle(), []);
+  const refs = useRef<(THREE.Sprite | null)[]>([]);
+  const items = INTERACTABLES.filter((i) => !visited.has(i.id));
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    refs.current.forEach((s, i) => {
+      if (!s) return;
+      const k = Math.max(0, Math.sin(t * 2.4 + i * 1.9));
+      s.scale.setScalar(0.08 + k * 0.28);
+      (s.material as THREE.SpriteMaterial).opacity = k;
+    });
+  });
+
+  return (
+    <>
+      {items.map((it, i) => {
+        const x = it.cells.reduce((a, c) => a + c[0], 0) / it.cells.length;
+        const z = Math.max(it.cells[0][1], -0.3);
+        return (
+          <sprite
+            key={it.id}
+            ref={(s) => {
+              refs.current[i] = s;
+            }}
+            position={[x + 0.3, it.hintY - 0.35, z + 0.2]}
+          >
+            <spriteMaterial
+              map={texture}
+              color={new THREE.Color(3, 2.8, 2)}
+              transparent
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </sprite>
+        );
+      })}
+    </>
+  );
+}
+
+/** Dust floating in the window's light beam. */
+function DustMotes() {
+  const COUNT = 60;
+  const points = useRef<THREE.Points>(null);
+  const { geometry, seeds } = useMemo(() => {
+    const seeds = Array.from({ length: COUNT }, () => [
+      5 + Math.random() * 3.5,
+      0.3 + Math.random() * 2.4,
+      Math.random() * 4,
+      Math.random() * Math.PI * 2,
+    ]);
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(COUNT * 3), 3));
+    return { geometry, seeds };
+  }, []);
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    const pos = geometry.attributes.position as THREE.BufferAttribute;
+    seeds.forEach(([x, y, z, ph], i) => {
+      pos.setXYZ(
+        i,
+        x + Math.sin(t * 0.3 + ph) * 0.3,
+        ((y + t * 0.05) % 2.7) + 0.2,
+        z + Math.cos(t * 0.25 + ph) * 0.3
+      );
+    });
+    pos.needsUpdate = true;
+  });
+
+  return (
+    <points ref={points} geometry={geometry}>
+      <pointsMaterial
+        size={0.05}
+        color={new THREE.Color(2.2, 1.7, 1.2)}
+        transparent
+        opacity={0.8}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </points>
   );
 }
 
@@ -398,22 +615,23 @@ function WindowLight() {
 
 function CameraRig({ ctrl }: { ctrl: RefObject<Controller> }) {
   const camera = useThree((s) => s.camera);
-  const target = useRef(new THREE.Vector3());
-  const look = useRef(new THREE.Vector3());
+  const look = useRef<THREE.Vector3 | null>(null);
+  const goal = useRef(new THREE.Vector3());
 
   useFrame((_, dt) => {
-    const c = ctrl.current;
-    const x = THREE.MathUtils.lerp(c.from[0], c.tile[0], c.t);
-    const z = THREE.MathUtils.lerp(c.from[1], c.tile[1], c.t);
-    // Keep the room framed: follow the player but clamp near the walls
-    const fx = THREE.MathUtils.clamp(x, 3, MAP_W - 4);
-    // Look slightly ahead (towards the camera) so the dialog box never hides the player
-    const fz = THREE.MathUtils.clamp(z + 1, 2, MAP_H - 2);
-    look.current.set(fx, 0.6, fz);
-    target.current.copy(look.current).add(CAMERA_OFFSET);
-    const k = 1 - Math.exp(-dt * 6);
-    camera.position.lerp(target.current, k);
-    camera.lookAt(camera.position.clone().sub(CAMERA_OFFSET).setY(0.6));
+    const [x, z] = controllerPos(ctrl.current);
+    // Keep the room framed: follow the player but clamp near the walls.
+    // Look slightly ahead (towards the camera) so the dialog box never hides the player.
+    goal.current.set(
+      THREE.MathUtils.clamp(x, 3, MAP_W - 4),
+      0.6,
+      THREE.MathUtils.clamp(z + 1, 2, MAP_H - 2)
+    );
+    if (!look.current) look.current = goal.current.clone();
+    // Frame-rate independent smoothing, tight enough to avoid a floaty lag
+    look.current.lerp(goal.current, 1 - Math.exp(-dt * 10));
+    camera.position.copy(look.current).add(CAMERA_OFFSET);
+    camera.lookAt(look.current);
   });
   return null;
 }
@@ -425,24 +643,40 @@ function Controls({
   ctrl: RefObject<Controller>;
   walkable: (cell: Cell) => boolean;
 }) {
-  useFrame((_, dt) => stepController(ctrl.current, Math.min(dt, 0.1), walkable));
+  useFrame((_, dt) => {
+    stepController(ctrl.current, Math.min(dt, 0.1), walkable);
+  });
   return null;
 }
 
 type WorldProps = {
   ctrl: RefObject<Controller>;
-  walkable: (cell: Cell) => boolean;
+  amalie: RefObject<Controller>;
+  playerWalkable: (cell: Cell) => boolean;
+  amalieWalkable: (cell: Cell) => boolean;
+  targetAt: (cell: Cell) => string | null;
+  onTarget: (id: string | null) => void;
   playerSheet: string;
   rivalSheet: string;
   rivalFacing: Dir;
+  rivalAlert: boolean;
+  dialogOpen: boolean;
+  visited: Set<string>;
 };
 
 export default function World({
   ctrl,
-  walkable,
+  amalie,
+  playerWalkable,
+  amalieWalkable,
+  targetAt,
+  onTarget,
   playerSheet,
   rivalSheet,
   rivalFacing,
+  rivalAlert,
+  dialogOpen,
+  visited,
 }: WorldProps) {
   return (
     <>
@@ -464,11 +698,23 @@ export default function World({
       <WindowLight />
       <pointLight position={[5, 2.8, 5]} intensity={6} distance={9} color="#ffd9a0" />
 
-      <Controls ctrl={ctrl} walkable={walkable} />
+      <Controls ctrl={ctrl} walkable={playerWalkable} />
+      <AmalieBrain ctrl={amalie} walkable={amalieWalkable} />
       <CameraRig ctrl={ctrl} />
       <Room />
-      <Player ctrl={ctrl} sheetUrl={playerSheet} />
+      <DustMotes />
+      <Walker ctrl={ctrl} sheetUrl={playerSheet} />
+      <Walker ctrl={amalie} sheetUrl="/sprites/amalie.png" />
       <Rival sheetUrl={rivalSheet} facing={rivalFacing} />
+      <Sparkles visited={visited} />
+      <InteractHint
+        ctrl={ctrl}
+        amalie={amalie}
+        targetAt={targetAt}
+        hidden={dialogOpen || rivalAlert}
+        onTarget={onTarget}
+      />
+      <RivalAlert show={rivalAlert} />
 
       <EffectComposer multisampling={0}>
         <Bloom mipmapBlur luminanceThreshold={0.85} intensity={0.9} />

@@ -56,7 +56,7 @@ export default function DialogBox({ pages, onClose }: Props) {
     <div
       role="dialog"
       aria-live="polite"
-      className="absolute left-2 right-2 bottom-2 z-20 cursor-pointer select-none"
+      className="absolute left-2 right-2 bottom-2 z-20 cursor-pointer select-none dialog-pop"
       onClick={advance}
     >
       <Container fixedWidth className="w-full h-[118px]" childrenClasses="w-full">

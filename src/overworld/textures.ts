@@ -192,3 +192,47 @@ export function whiteboard() {
     }
   });
 }
+
+// Speech bubble with a glyph ("!" for alerts, "A" for the interact hint)
+export function bubble(glyph: "!" | "A", glyphColor: string) {
+  return makeTexture(16, 16, (ctx) => {
+    const K = "#1a1420";
+    px(ctx, K, 3, 0, 10, 1);
+    px(ctx, K, 1, 1, 2, 1);
+    px(ctx, K, 13, 1, 2, 1);
+    px(ctx, K, 0, 2, 1, 8);
+    px(ctx, K, 15, 2, 1, 8);
+    px(ctx, K, 1, 10, 2, 1);
+    px(ctx, K, 13, 10, 2, 1);
+    px(ctx, K, 3, 11, 3, 1);
+    px(ctx, K, 9, 11, 4, 1);
+    px(ctx, "#ffffff", 3, 1, 10, 10);
+    px(ctx, "#ffffff", 1, 2, 14, 8);
+    // tail
+    px(ctx, "#ffffff", 6, 11, 3, 1);
+    px(ctx, K, 6, 12, 1, 1);
+    px(ctx, K, 8, 12, 1, 1);
+    px(ctx, "#ffffff", 7, 12, 1, 1);
+    px(ctx, K, 7, 13, 1, 1);
+    if (glyph === "!") {
+      px(ctx, glyphColor, 7, 3, 2, 4);
+      px(ctx, glyphColor, 7, 8, 2, 1);
+    } else {
+      // Circle "A" button
+      px(ctx, glyphColor, 5, 3, 6, 6);
+      px(ctx, glyphColor, 4, 4, 8, 4);
+      px(ctx, "#ffffff", 7, 4, 2, 1);
+      px(ctx, "#ffffff", 6, 5, 1, 3);
+      px(ctx, "#ffffff", 9, 5, 1, 3);
+      px(ctx, "#ffffff", 7, 6, 2, 1);
+    }
+  });
+}
+
+export function sparkle() {
+  return makeTexture(7, 7, (ctx) => {
+    px(ctx, "#fff7c2", 3, 0, 1, 7);
+    px(ctx, "#fff7c2", 0, 3, 7, 1);
+    px(ctx, "#ffffff", 2, 2, 3, 3);
+  });
+}

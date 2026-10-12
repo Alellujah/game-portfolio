@@ -150,3 +150,37 @@ body {
 /* Overworld dialog "more" arrow */
 @keyframes blink-arrow-kf { 0%, 49% { opacity: 1 } 50%, 100% { opacity: 0 } }
 .blink-arrow { animation: blink-arrow-kf 900ms steps(2, end) infinite; }
+
+/* Overworld transitions */
+@keyframes fade-from-black-kf { from { opacity: 1 } to { opacity: 0 } }
+.fade-from-black { animation: fade-from-black-kf 700ms ease-out 150ms both; }
+
+@keyframes hint-pop-kf { from { transform: scale(0.6); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+.hint-pop { animation: hint-pop-kf 140ms ease-out both; transform-origin: bottom right; }
+
+@keyframes dialog-pop-kf { from { transform: scaleY(0.2); opacity: 0 } to { transform: scaleY(1); opacity: 1 } }
+.dialog-pop { animation: dialog-pop-kf 140ms ease-out both; transform-origin: bottom; }
+
+/* Pokémon-style encounter: three white flashes, then black bars sweep in
+   from alternating sides. Total 1300ms (BATTLE_TRANSITION_MS). */
+@keyframes battle-flash-kf {
+  0%, 12%, 24%, 36% { background-color: rgba(255, 255, 255, 0) }
+  6%, 18%, 30% { background-color: rgba(255, 255, 255, 0.9) }
+  100% { background-color: rgba(255, 255, 255, 0) }
+}
+@keyframes battle-bars-kf {
+  from { background-size: 0% 100%, 0% 100% }
+  to { background-size: 100% 100%, 100% 100% }
+}
+.battle-transition {
+  animation: battle-flash-kf 1300ms linear both;
+}
+.battle-transition::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(to bottom, #000 0 27px, transparent 27px 54px) left top / 0% 100% no-repeat,
+    repeating-linear-gradient(to bottom, transparent 0 27px, #000 27px 54px) right top / 0% 100% no-repeat;
+  animation: battle-bars-kf 650ms steps(10, end) 550ms forwards;
+}
