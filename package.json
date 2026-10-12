@@ -13,12 +13,8 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@react-three/fiber": "9.3.0",
-    "@react-three/postprocessing": "3.0.4",
-    "postprocessing": "6.39.5",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "three": "0.180.0"
+    "react-dom": "^19.1.1"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.1",
@@ -31,7 +27,6 @@
     "@tailwindcss/postcss": "^4.1.12",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
-    "@types/three": "0.180.0",
     "@vitejs/plugin-react": "^5.0.0",
     "@vitest/browser": "^3.2.4",
     "@vitest/coverage-v8": "^3.2.4",

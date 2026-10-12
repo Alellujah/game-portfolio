@@ -18,7 +18,6 @@ export const SPAWN: Cell = [5, 4];
 // The rival blocks the door, bottom-center of the room
 export const RIVAL: Cell = [5, 8];
 export const AMALIE_SPAWN: Cell = [8, 6];
-export const NPC_HINT_Y = { rival: 2.5, amalie: 1.75 };
 
 export type Page = {
   text: string;
@@ -28,12 +27,10 @@ export type Page = {
 export type Interactable = {
   id: string;
   cells: Cell[];
-  // Height of the hint bubble / sparkle above the object
-  hintY: number;
   pages: Page[];
 };
 
-// Cells occupied by furniture/decor (not walkable). Interactables add their own cells.
+// Cells occupied by decor (the plants; not walkable). Interactables add their own cells.
 export const DECOR_CELLS: Cell[] = [
   [0, 8], // plant
   [10, 8], // plant
@@ -43,7 +40,6 @@ export const DECOR_CELLS: Cell[] = [
 export const INTERACTABLES: Interactable[] = [
   {
     id: "window",
-    hintY: 2.95,
     // Window sits on the back wall; inspect it from the row below
     cells: [
       [6, -1],
@@ -63,7 +59,6 @@ export const INTERACTABLES: Interactable[] = [
   },
   {
     id: "pc",
-    hintY: 1.75,
     cells: [
       [0, 0],
       [1, 0],
@@ -93,7 +88,6 @@ export const INTERACTABLES: Interactable[] = [
   },
   {
     id: "shelf",
-    hintY: 2.55,
     cells: [
       [3, 0],
       [4, 0],
@@ -107,7 +101,6 @@ export const INTERACTABLES: Interactable[] = [
   },
   {
     id: "rack",
-    hintY: 2.35,
     cells: [[9, 0]],
     pages: [
       { text: "A server rack hums quietly. The LEDs blink happily." },
@@ -120,7 +113,6 @@ export const INTERACTABLES: Interactable[] = [
   },
   {
     id: "whiteboard",
-    hintY: 2.2,
     cells: [[10, 2]],
     pages: [
       { text: "A career timeline is scribbled on the whiteboard." },
@@ -136,7 +128,6 @@ export const INTERACTABLES: Interactable[] = [
   },
   {
     id: "tv",
-    hintY: 1.7,
     cells: [
       [0, 4],
       [0, 5],
@@ -149,7 +140,6 @@ export const INTERACTABLES: Interactable[] = [
   },
   {
     id: "phone",
-    hintY: 1.15,
     cells: [[10, 5]],
     pages: [
       { text: "A phone with a sticky note on it." },

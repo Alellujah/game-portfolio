@@ -1,6 +1,5 @@
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Canvas } from "@react-three/fiber";
-import World from "./World";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Field from "./Field";
 import DialogBox from "./DialogBox";
 import {
   AMALIE_SPAWN,
@@ -50,7 +49,7 @@ type Props = {
 type Dialog = { id: string; pages: Page[] };
 
 /**
- * Explorable HD-2D room: 3D environment, 2D billboard sprites.
+ * Explorable top-down room in the Game Boy style.
  * Inspecting objects reveals info about Fábio; talking to the rival starts the battle.
  */
 export default function Overworld({ playerId, onBattle }: Props) {
@@ -170,31 +169,20 @@ export default function Overworld({ playerId, onBattle }: Props) {
 
   return (
     <div className="absolute inset-0">
-      <Canvas
-        shadows
-        // Fixed dpr keeps the Game Boy pixel grid exact
-        dpr={1}
-        gl={{ antialias: false }}
-        resize={{ offsetSize: true }}
-        camera={{ fov: 32, position: [5, 9.5, 14], near: 0.1, far: 60 }}
-      >
-        <Suspense fallback={null}>
-          <World
-            ctrl={ctrl}
-            amalie={amalie}
-            playerWalkable={playerWalkable}
-            amalieWalkable={amalieWalkable}
-            targetAt={targetAt}
-            onTarget={setTarget}
-            playerSheet={isRecruiter ? SHEETS.recruiter : SHEETS.developer}
-            rivalSheet={isRecruiter ? SHEETS.developer : SHEETS.recruiter}
-            rivalFacing={rivalFacing}
-            rivalAlert={rivalAlert}
-            dialogOpen={dialog !== null}
-            visited={visited}
-          />
-        </Suspense>
-      </Canvas>
+      <Field
+        ctrl={ctrl}
+        amalie={amalie}
+        playerWalkable={playerWalkable}
+        amalieWalkable={amalieWalkable}
+        targetAt={targetAt}
+        onTarget={setTarget}
+        playerSheet={isRecruiter ? SHEETS.recruiter : SHEETS.developer}
+        rivalSheet={isRecruiter ? SHEETS.developer : SHEETS.recruiter}
+        rivalFacing={rivalFacing}
+        rivalAlert={rivalAlert}
+        hintsHidden={busy}
+        visited={visited}
+      />
 
       <div className="absolute top-2 left-2 z-10 bg-white border-4 border-black px-2 py-1 text-[11px]">
         FOUND {visited.size}/{INTERACTABLES.length}
