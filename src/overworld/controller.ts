@@ -22,7 +22,8 @@ export type Controller = {
 };
 
 export const PLAYER_STEP_SECONDS = 0.22;
-const TURN_PAUSE = 0.09;
+// Holding a new direction longer than this walks; a quicker tap only turns (~8 frames, like Gen 1)
+const TURN_PAUSE = 0.14;
 
 export function createController(
   spawn: Cell,

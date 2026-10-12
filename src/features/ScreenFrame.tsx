@@ -44,7 +44,7 @@ function ScreenFrame({
     return () => window.removeEventListener("resize", compute);
   }, []);
   return (
-    <div className="w-full min-h-screen snes-bg py-8 flex flex-col items-center">
+    <div className="w-full min-h-screen snes-bg py-8 flex flex-col items-center game-shell">
       {/* Console shell */}
       <div
         className="relative inline-block rounded-[18px] shadow-md"

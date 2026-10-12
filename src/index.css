@@ -184,3 +184,15 @@ body {
     repeating-linear-gradient(to bottom, transparent 0 27px, #000 27px 54px) right top / 0% 100% no-repeat;
   animation: battle-bars-kf 650ms steps(10, end) 550ms forwards;
 }
+
+/* Mobile: holding the on-screen buttons must never start a text selection,
+   show the iOS callout menu, or scroll/zoom the page */
+.game-shell {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+#mobile-controls {
+  touch-action: none;
+}

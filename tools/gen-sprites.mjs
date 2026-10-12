@@ -12,35 +12,40 @@ import { mkdirSync } from "node:fs";
 const FRAME_W = 16;
 const FRAME_H = 24;
 
-const PALETTE = {
-  K: "#0c0a10", // outline (dark enough to land on the darkest GB shade)
-  H: "#3b2a20", // hair
-  h: "#5c4232", // hair highlight
-  S: "#f2c19a", // skin
-  s: "#d49a74", // skin shadow
-  W: "#e6eef4", // lens / shirt
-  B: "#6a4a38", // beard
-  O: "#4f7a8c", // hoodie
-  o: "#3a5a68", // hoodie shadow
-  N: "#ececec", // drawstrings / sneakers
-  P: "#3a3f58", // jeans
-  Y: "#c0563a", // backpack
-  y: "#8a3a28", // backpack shadow
-  M: "#d9d6c8", // monitor casing
-  m: "#a8a496", // monitor shadow
-  C: "#7fc8d8", // screen
-  c: "#4f98a8", // screen dark
-  U: "#7c7f8c", // suit
-  u: "#5c5f6c", // suit shadow
-  T: "#c0392b", // tie
-  A: "#8a5a30", // briefcase
-  D: "#2a2a30", // dress shoes
-  R: "#8a5a2b", // kid hair
-  r: "#b07a40", // kid hair highlight
-  E: "#f2c94c", // kid dress
-  e: "#d4a72c", // kid dress shadow
-  Q: "#e05a7a", // kid shoes
+// Game Boy-style greys (same as the battle art): 0 darkest .. 4 lightest
+export const GB = ["#1c1b1b", "#585654", "#908e8c", "#c7c5c3", "#e7e5e4"];
+
+// Each pixel-art letter maps to one of the 5 greys
+const SHADE = {
+  K: 0, // outline
+  H: 1, // hair
+  h: 2, // hair highlight
+  S: 4, // skin
+  s: 3, // skin shadow
+  W: 4, // lens / shirt
+  B: 2, // beard
+  O: 2, // hoodie
+  o: 1, // hoodie shadow
+  N: 4, // drawstrings / sneakers
+  P: 1, // jeans
+  Y: 3, // backpack
+  y: 2, // backpack shadow
+  M: 4, // monitor casing
+  m: 3, // monitor shadow
+  C: 3, // screen
+  c: 2, // screen dark
+  U: 2, // suit
+  u: 1, // suit shadow
+  T: 0, // tie
+  A: 1, // briefcase
+  D: 1, // dress shoes
+  R: 2, // kid hair
+  r: 3, // kid hair highlight
+  E: 4, // kid dress
+  e: 3, // kid dress shadow
+  Q: 1, // kid shoes
 };
+const PALETTE = Object.fromEntries(Object.entries(SHADE).map(([k, v]) => [k, GB[v]]));
 
 /* ---------------------------------- Fábio --------------------------------- */
 
