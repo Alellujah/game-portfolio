@@ -43,8 +43,8 @@ export default function BattleScene({
 
   useEffect(() => {
     if (palletTownAudioRef.current) palletTownAudioRef.current.muted = muted;
-    if (tainerBattleAudioRef.current)
-      tainerBattleAudioRef.current.muted = muted;
+    if (trainerBattleAudioRef.current)
+      trainerBattleAudioRef.current.muted = muted;
   }, [muted]);
 
   const playerSpriteUrl =
@@ -62,7 +62,7 @@ export default function BattleScene({
     selectedPlayer?.id === "recruiter" ? playerMons : enemyMons;
 
   const palletTownAudioRef = useRef<HTMLAudioElement>(null);
-  const tainerBattleAudioRef = useRef<HTMLAudioElement>(null);
+  const trainerBattleAudioRef = useRef<HTMLAudioElement>(null);
 
   return (
     <div
@@ -91,10 +91,10 @@ export default function BattleScene({
           onSelect={(char) => {
             palletTownAudioRef.current?.pause();
 
-            tainerBattleAudioRef.current = new Audio("midi/trainer-battle.mp3");
-            tainerBattleAudioRef.current.loop = true;
-            tainerBattleAudioRef.current.muted = muted;
-            tainerBattleAudioRef.current.play();
+            trainerBattleAudioRef.current = new Audio("midi/trainer-battle.mp3");
+            trainerBattleAudioRef.current.loop = true;
+            trainerBattleAudioRef.current.muted = muted;
+            trainerBattleAudioRef.current.play();
 
             setSelectedPlayer(char);
             setScene("intro");
