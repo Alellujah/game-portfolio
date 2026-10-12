@@ -13,7 +13,7 @@ const FRAME_W = 16;
 const FRAME_H = 24;
 
 const PALETTE = {
-  K: "#1a1420", // outline
+  K: "#0c0a10", // outline (dark enough to land on the darkest GB shade)
   H: "#3b2a20", // hair
   h: "#5c4232", // hair highlight
   S: "#f2c19a", // skin

@@ -1,12 +1,8 @@
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { useFrame, useLoader, useThree } from "@react-three/fiber";
-import {
-  Bloom,
-  EffectComposer,
-  TiltShift2,
-  Vignette,
-} from "@react-three/postprocessing";
+import { EffectComposer, Pixelation } from "@react-three/postprocessing";
 import * as THREE from "three";
+import { SCALE } from "../config/ui";
 import {
   DIRS,
   INTERACTABLES,
@@ -24,8 +20,12 @@ import {
   type Controller,
 } from "./controller";
 import * as tex from "./textures";
+import { GBPaletteEffect } from "./gbEffect";
 
 type Vec3 = [number, number, number];
+
+// One Game Boy pixel in screen pixels (the canvas renders at dpr 1)
+const GB_PIXEL = SCALE;
 
 const CAMERA_OFFSET = new THREE.Vector3(0, 9.5, 8.5);
 const CAMERA_PITCH = Math.atan2(CAMERA_OFFSET.y, CAMERA_OFFSET.z);
@@ -315,14 +315,12 @@ function useSheet(url: string) {
     map.generateMipmaps = false;
     map.repeat.set(1 / SHEET_COLS, 1 / SHEET_ROWS);
     map.needsUpdate = true;
-    const material = new THREE.MeshStandardMaterial({
+    // Unlit, like Game Boy sprites: their shades never change with the room's lighting
+    const material = new THREE.MeshBasicMaterial({
       map,
       alphaTest: 0.5,
       side: THREE.DoubleSide,
-      roughness: 1,
-      emissiveMap: map,
-      emissive: new THREE.Color("#ffffff"),
-      emissiveIntensity: 0.3,
+      toneMapped: false,
     });
     const setFrame = (facing: Dir, col: number) => {
       map.offset.set(col / SHEET_COLS, 1 - (FACING_ROW[facing] + 1) / SHEET_ROWS);
@@ -546,50 +544,6 @@ function Sparkles({ visited }: { visited: Set<string> }) {
   );
 }
 
-/** Dust floating in the window's light beam. */
-function DustMotes() {
-  const COUNT = 60;
-  const points = useRef<THREE.Points>(null);
-  const { geometry, seeds } = useMemo(() => {
-    const seeds = Array.from({ length: COUNT }, () => [
-      5 + Math.random() * 3.5,
-      0.3 + Math.random() * 2.4,
-      Math.random() * 4,
-      Math.random() * Math.PI * 2,
-    ]);
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(COUNT * 3), 3));
-    return { geometry, seeds };
-  }, []);
-
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime();
-    const pos = geometry.attributes.position as THREE.BufferAttribute;
-    seeds.forEach(([x, y, z, ph], i) => {
-      pos.setXYZ(
-        i,
-        x + Math.sin(t * 0.3 + ph) * 0.3,
-        ((y + t * 0.05) % 2.7) + 0.2,
-        z + Math.cos(t * 0.25 + ph) * 0.3
-      );
-    });
-    pos.needsUpdate = true;
-  });
-
-  return (
-    <points ref={points} geometry={geometry}>
-      <pointsMaterial
-        size={0.05}
-        color={new THREE.Color(2.2, 1.7, 1.2)}
-        transparent
-        opacity={0.8}
-        depthWrite={false}
-        toneMapped={false}
-      />
-    </points>
-  );
-}
-
 /* ---------------------------------- scene ---------------------------------- */
 
 function WindowLight() {
@@ -606,7 +560,7 @@ function WindowLight() {
       position={[6.5, 2.4, 0.2]}
       angle={0.9}
       penumbra={0.8}
-      intensity={14}
+      intensity={6}
       distance={10}
       color="#ff9f7a"
     />
@@ -649,6 +603,17 @@ function Controls({
   return null;
 }
 
+/** Game Boy look: 160x144 pixel grid (3px blocks at SCALE 3) + 5 greys. */
+function GameBoyLook() {
+  const palette = useMemo(() => new GBPaletteEffect({ granularity: GB_PIXEL }), []);
+  return (
+    <EffectComposer multisampling={0}>
+      <Pixelation granularity={GB_PIXEL} />
+      <primitive object={palette} />
+    </EffectComposer>
+  );
+}
+
 type WorldProps = {
   ctrl: RefObject<Controller>;
   amalie: RefObject<Controller>;
@@ -681,7 +646,7 @@ export default function World({
   return (
     <>
       <color attach="background" args={["#120c12"]} />
-      <hemisphereLight args={["#ffe9c4", "#4a3020", 0.9]} />
+      <hemisphereLight args={["#ffe9c4", "#4a3020", 1.8]} />
       <directionalLight
         position={[9, 9, 7]}
         intensity={1.6}
@@ -696,13 +661,12 @@ export default function World({
       />
       {/* Warm dusk light spilling from the window */}
       <WindowLight />
-      <pointLight position={[5, 2.8, 5]} intensity={6} distance={9} color="#ffd9a0" />
+      <pointLight position={[5, 2.8, 5]} intensity={3} distance={9} color="#ffd9a0" />
 
       <Controls ctrl={ctrl} walkable={playerWalkable} />
       <AmalieBrain ctrl={amalie} walkable={amalieWalkable} />
       <CameraRig ctrl={ctrl} />
       <Room />
-      <DustMotes />
       <Walker ctrl={ctrl} sheetUrl={playerSheet} />
       <Walker ctrl={amalie} sheetUrl="/sprites/amalie.png" />
       <Rival sheetUrl={rivalSheet} facing={rivalFacing} />
@@ -716,11 +680,7 @@ export default function World({
       />
       <RivalAlert show={rivalAlert} />
 
-      <EffectComposer multisampling={0}>
-        <Bloom mipmapBlur luminanceThreshold={0.85} intensity={0.9} />
-        <TiltShift2 blur={0.2} taper={0.6} />
-        <Vignette darkness={0.6} offset={0.3} />
-      </EffectComposer>
+      <GameBoyLook />
     </>
   );
 }
